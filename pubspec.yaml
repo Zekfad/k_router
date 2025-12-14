@@ -1,0 +1,26 @@
+name: k_router
+description: Production Navigator 2.0 router with full state restoration.
+version: 0.1.0+0
+homepage: https://github.com/Zekfad/k_router
+repository: https://github.com/Zekfad/k_router
+issue_tracker: https://github.com/Zekfad/k_router/issues
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  collection: ^1.19.0
+  flutter:
+    sdk: flutter
+  meta: ^1.17.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  zekfad_lints: ^2.3.1
+
+# flutter:
+#   module:
+#     androidX: true
+#     androidPackage: moe._null.flutter.k_router
+#     iosBundleIdentifier: moe.null.flutter.kRouter

@@ -1,0 +1,27 @@
+name: example
+description: A new Flutter application.
+version: 1.0.0+1
+publish_to: none
+
+environment:
+  sdk: ^3.10.0
+  flutter: ^3.38.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  k_router:
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  zekfad_lints: ^2.3.1
+
+dependency_overrides:
+  k_router:
+    path: ../
+
+flutter:
+  uses-material-design: true

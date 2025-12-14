@@ -1,0 +1,4 @@
+include: package:zekfad_lints/flutter.yaml
+analyzer:
+  errors:
+    diagnostic_describe_all_properties: ignore

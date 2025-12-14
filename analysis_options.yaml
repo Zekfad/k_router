@@ -1,0 +1,12 @@
+include: package:zekfad_lints/flutter.yaml
+
+analyzer:
+  errors:
+    body_might_complete_normally_nullable: error
+
+linter:
+  rules:
+    public_member_api_docs: true
+    curly_braces_in_flow_control_structures: true
+    no_leading_underscores_for_library_prefixes: true
+    no_leading_underscores_for_local_identifiers: true
