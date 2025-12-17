@@ -19,19 +19,17 @@ base mixin _SimpleMultiLocation<T> on BaseMultiLocation<T> {
 
   @override
   Page<T> buildPage(BuildContext context, {
+    required LocalKey key,
+    required String name,
     required String restorationId,
-    List<Widget>? children,
+    required Widget child,
     int? activeIndex,
   }) => CupertinoPage(
-    key: ValueKey(this),
+    key: key,
+    name: name,
     restorationId: restorationId,
-    name: uri.toString(),
     title: title,
-    child: build(
-      context,
-      children: children,
-      activeIndex: activeIndex,
-    ),
+    child: child,
   );
 
   @override

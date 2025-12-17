@@ -1,3 +1,4 @@
+/// @docImport 'package:flutter/cupertino.dart';
 /// @docImport 'package:flutter/material.dart';
 /// @docImport 'package:k_router/k_router.dart';
 library;
@@ -29,32 +30,41 @@ abstract interface class Location<T> implements Listenable {
 
   /// Create page for insertion into [Navigator.pages].
   /// 
-  /// You __MUST__ pass `ValueKey(this)` to [Page.key] because this page will
-  /// be recreated occasionally and moved around in [Navigator.pages].
+  /// You __MUST__ pass [key] to [Page.key]. Because this page will
+  /// be recreated occasionally and moved around in [Navigator.pages] this is
+  /// required to correctly preserve page state.
   /// 
-  /// You __MUST__ pass `uri.toString()` to [Page.name] because flutter uses it
-  /// (actually it's an URI, filed name is confusing) for internal purposes.
+  /// You __MUST__ pass [name] to [Page.name]. Flutter internally uses name in
+  /// some cases and it must be a valid [Uri] (naming is a bit confusing).
   /// 
-  /// This method can be called again after location updates.
-  /// You should not reference returned page object directly, because it can be
-  /// outdated very soon.
+  /// You __MUST__ pass [restorationId] to [Page.restorationId]. This ensures
+  /// correct state restoration for page and it's contents.
+  /// 
+  /// You __MUST__ pass [child] to [MaterialPage.child]/[CupertinoPage.child].
+  /// 
+  /// This method can be called multiple times (for example after location
+  /// updates). You should not reference returned page object directly.
+  /// 
+  /// If you're converting [Route] to [Page] by overriding [Page.createRoute],
+  /// you should reference page only though [Route.settings] getter which will
+  /// always point to an actual page object.
   /// 
   /// {@template location_build_context}
   /// This method is executed in [context] of [AppNavigator], you may consider
   /// using [Builder] or [StatefulWidget] for acquiring new context.
   /// {@endtemplate}
   /// 
-  /// If you're converting [Route] to [Page] by overriding [Page.createRoute],
-  /// you should reference page only though [Route.settings] getter which will
-  /// always point to actual page.
+  @factory
   Page<T> buildPage(BuildContext context, {
+    required LocalKey key,
+    required String name,
     required String restorationId,
+    required Widget child,
   });
 
   /// Build method for page content.
   /// 
-  /// Default implementation of [buildPage] uses this method to populate
-  /// [MaterialPage.child].
+  /// Result of this method will be passed to [buildPage] as `child` parameter.
   /// 
   /// {@macro location_build_context}
   Widget build(BuildContext context);
@@ -85,10 +95,18 @@ abstract interface class ShellLocation<T> implements LocationWithChildren<T> {
 
   @override
   Page<T> buildPage(BuildContext context, {
+    required LocalKey key,
+    required String name,
     required String restorationId,
-    Widget? navigator,
+    required Widget child,
   });
 
+  /// Build method for page content.
+  /// 
+  /// Result of this method will be passed to [buildPage] as `child` parameter
+  /// or it can be used inline as part of shell for multi location.
+  /// 
+  /// {@macro location_build_context}
   @override
   Widget build(BuildContext context, {
     Widget? navigator,
@@ -110,15 +128,17 @@ abstract interface class MultiLocation<T> implements LocationWithChildren<T> {
 
   @override
   Page<T> buildPage(BuildContext context, {
+    required LocalKey key,
+    required String name,
     required String restorationId,
-    List<Widget>? children,
+    required Widget child,
     int? activeIndex,
   });
 
   @override
   Widget build(BuildContext context, {
-    List<Widget>? children,
     int? activeIndex,
+    List<Widget>? children,
   });
 }
 

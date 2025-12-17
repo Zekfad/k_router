@@ -67,13 +67,15 @@ abstract base class BaseLocation<T> with ChangeNotifier, LocationPopType<T> impl
 
   @override
   Page<T> buildPage(BuildContext context, {
+    required LocalKey key,
+    required String name,
     required String restorationId,
+    required Widget child,
   }) => MaterialPage(
-    key: ValueKey(this),
+    key: key,
+    name: name,
     restorationId: restorationId,
-    name: uri.toString(),
-    // title: title,
-    child: build(context),
+    child: child,
   );
 
   @override
@@ -108,19 +110,16 @@ abstract base class BaseMultiLocation<T> extends BaseLocation<T> implements Mult
 
   @override
   Page<T> buildPage(BuildContext context, {
+    required LocalKey key,
+    required String name,
     required String restorationId,
-    List<Widget>? children,
+    required Widget child,
     int? activeIndex,
   }) => MaterialPage(
-    key: ValueKey(this),
+    key: key,
+    name: name,
     restorationId: restorationId,
-    name: uri.toString(),
-    // title: title,
-    child: build(
-      context,
-      children: children,
-      activeIndex: activeIndex,
-    ),
+    child: child,
   );
 }
 
@@ -141,17 +140,5 @@ abstract base class BaseShellLocation<T> extends BaseLocation<T> implements Shel
   BaseShellLocation.fromOptions(LocationOptions options) : this(
     uri: options.uri,
     title: options.title,
-  );
-
-  @override
-  Page<T> buildPage(BuildContext context, {
-    required String restorationId,
-    Widget? navigator,
-  }) => MaterialPage(
-    key: ValueKey(this),
-    restorationId: restorationId,
-    name: uri.toString(),
-    // title: title,
-    child: build(context, navigator: navigator),
   );
 }

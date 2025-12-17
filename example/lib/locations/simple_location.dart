@@ -13,13 +13,16 @@ base mixin _SimpleLocation<T> on BaseLocation<T> {
 
   @override
   Page<T> buildPage(BuildContext context, {
+    required LocalKey key,
+    required String name,
     required String restorationId,
+    required Widget child,
   }) => CupertinoPage(
-    key: ValueKey(this),
+    key: key,
+    name: name,
     restorationId: restorationId,
-    name: uri.toString(),
     title: title,
-    child: build(context),
+    child: child,
   );
 
   @override

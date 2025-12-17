@@ -26,14 +26,16 @@ final class SimpleShellLocation extends BaseShellLocation with LocationWithState
 
   @override
   Page<Object?> buildPage(BuildContext context, {
+    required LocalKey key,
+    required String name,
     required String restorationId,
-    Widget? navigator,
+    required Widget child,
   }) => CupertinoPage(
-    key: ValueKey(this),
+    key: key,
+    name: name,
     restorationId: restorationId,
-    name: uri.toString(),
     title: title,
-    child: build(context, navigator: navigator),
+    child: child,
   );
 
   @override

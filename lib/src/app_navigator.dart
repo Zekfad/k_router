@@ -263,7 +263,6 @@ class _AppNavigatorState extends State<_AppNavigator> {
       }
       if (item.remove(route.popped)) {
         item.shellNavigator = null;
-        // setState((){});
       } else {
         // add back last item to prevent black screen
         widget.stack.triggerUpdate();
@@ -275,57 +274,69 @@ class _AppNavigatorState extends State<_AppNavigator> {
     item.page ??= switch (item.location) {
       final ShellLocation<Object?> shell => shell.buildPage(
         context,
+        key: ValueKey(shell),
+        name: shell.uri.toString(),
         restorationId: '$index#${shell.discriminator.discriminator}',
-        navigator: AppNavigator(
-          delegate: widget.delegate,
-          stack: item.children,
-          // navigatorKey: GlobalKey(debugLabel: 'shell nested navigator ${widget.restorationScopeId}/$index'),
-          navigatorKey: item.shellNavigator
-            ??= GlobalKey(debugLabel: 'shell nested navigator ${widget.restorationScopeId}/$index'),
-          restorationScopeId: '${widget.restorationScopeId}/$index',
+        child: shell.build(
+          context,
+          navigator: AppNavigator(
+            delegate: widget.delegate,
+            stack: item.children,
+            navigatorKey: item.shellNavigator
+              ??= GlobalKey(debugLabel: 'shell nested navigator ${widget.restorationScopeId}/$index'),
+            restorationScopeId: '${widget.restorationScopeId}/$index',
+          ),
         ),
       ),
       final MultiLocation<Object?> location => location.buildPage(
         context,
+        key: ValueKey(location),
+        name: location.uri.toString(),
         restorationId: '$index#${location.discriminator.discriminator}',
         activeIndex: item.children.activeItemIndex,
-        children: [
-          for (final (childIndex, childItem) in item.children.items.indexed)
-            RestorationScope(
-              restorationId: '${widget.restorationScopeId}/$index/$childIndex',
-              // propagate focus changes to router
-              child: _GroupFocusListener(
-                onFocus: () => item.children.selectChild(childIndex),
-                child: Listener(
-                  onPointerDown: (event) => item.children.selectChild(childIndex),
-                  child: _StackListener(
-                    delegate: widget.delegate,
-                    stack: item.children,
-                    onChange: () {
-                      // trigger rebuild of shell when children changes
-                      item.reset();
-                      item.stack.triggerUpdate();
-                    },
-                    child: (childItem.location as ShellLocation<Object?>).build(
-                      context,
-                      navigator: AppNavigator(
-                        delegate: widget.delegate,
-                        stack: childItem.children,
-                        // navigatorKey: GlobalKey(debugLabel: 'multi nested navigator ${widget.restorationScopeId}/$index'),
-                        navigatorKey: childItem.shellNavigator
-                          ??= GlobalKey(debugLabel: 'multi nested navigator ${widget.restorationScopeId}/$index/$childIndex'),
-                        restorationScopeId: '${widget.restorationScopeId}/$index/$childIndex',
+        child: location.build(
+          context,
+          activeIndex: item.children.activeItemIndex,
+          children: [
+            for (final (childIndex, childItem) in item.children.items.indexed)
+              RestorationScope(
+                restorationId: '${widget.restorationScopeId}/$index/$childIndex',
+                // propagate focus changes to router
+                child: _GroupFocusListener(
+                  onFocus: () => item.children.selectChild(childIndex),
+                  child: Listener(
+                    onPointerDown: (event) => item.children.selectChild(childIndex),
+                    child: _StackListener(
+                      delegate: widget.delegate,
+                      stack: item.children,
+                      onChange: () {
+                        // trigger rebuild of shell when children changes
+                        item.reset();
+                        item.stack.triggerUpdate();
+                      },
+                      child: (childItem.location as ShellLocation<Object?>).build(
+                        context,
+                        navigator: AppNavigator(
+                          delegate: widget.delegate,
+                          stack: childItem.children,
+                          navigatorKey: childItem.shellNavigator
+                            ??= GlobalKey(debugLabel: 'multi nested navigator ${widget.restorationScopeId}/$index/$childIndex'),
+                          restorationScopeId: '${widget.restorationScopeId}/$index/$childIndex',
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
       final location => location.buildPage(
         context,
+        key: ValueKey(location),
+        name: location.uri.toString(),
         restorationId: '$index#${location.discriminator.discriminator}',
+        child: location.build(context),
       ),
     };
 
