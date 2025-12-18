@@ -50,7 +50,7 @@ abstract interface class Location<T> implements Listenable {
   /// always point to an actual page object.
   /// 
   /// {@template location_build_context}
-  /// This method is executed in [context] of [AppNavigator], you may consider
+  /// This method is executed in [context] of [KNavigator], you may consider
   /// using [Builder] or [StatefulWidget] for acquiring new context.
   /// {@endtemplate}
   /// 

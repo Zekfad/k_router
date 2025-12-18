@@ -17,10 +17,10 @@ import 'location_stack_items_list.dart';
 /// K Router information parser.
 /// Turns router state into serializable format and parses it back.
 /// Used as part of state restoration, browser navigation and deep linking.
-class AppRouteInformationParser extends RouteInformationParser<LocationStack> {
+class KRouteInformationParser extends RouteInformationParser<LocationStack> {
   /// @nodoc
   @internal
-  const AppRouteInformationParser({
+  const KRouteInformationParser({
     required this.locationCodecs,
   });
 

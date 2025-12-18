@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:meta/meta.dart';
 
-import 'app_router_delegate.dart';
+import 'k_router_delegate.dart';
 import 'location.dart';
 import 'location_pop_type.dart';
 import 'location_stack.dart';
@@ -12,11 +12,11 @@ import 'location_stack_item.dart';
 
 
 /// K Router navigator provides location stack controls to descendants.
-class AppNavigator extends InheritedWidget {
+class KNavigator extends InheritedWidget {
   /// @nodoc
   @internal
-  AppNavigator({
-    required AppRouterDelegate delegate,
+  KNavigator({
+    required KRouterDelegate delegate,
     required LocationStack stack,
     required this.navigatorKey,
     required String restorationScopeId,
@@ -92,12 +92,12 @@ class AppNavigator extends InheritedWidget {
     assert(result, 'Cannot select requested child: index is out of bounds');
   }
 
-  /// Try to get [AppNavigator] from this [context].
-  static AppNavigator? maybeOf(BuildContext context) =>
-    context.dependOnInheritedWidgetOfExactType<AppNavigator>();
+  /// Try to get [KNavigator] from this [context].
+  static KNavigator? maybeOf(BuildContext context) =>
+    context.dependOnInheritedWidgetOfExactType<KNavigator>();
 
-  /// Require [AppNavigator] from this [context].
-  static AppNavigator of(BuildContext context) {
+  /// Require [KNavigator] from this [context].
+  static KNavigator of(BuildContext context) {
     final result = maybeOf(context);
     assert(result != null, 'No AppNavigator found in context');
     return result!;
@@ -161,7 +161,7 @@ class AppNavigator extends InheritedWidget {
   }
 
   @override
-  bool updateShouldNotify(covariant AppNavigator oldWidget) =>
+  bool updateShouldNotify(covariant KNavigator oldWidget) =>
     !identical(oldWidget._stack, _stack) ||
     !identical(oldWidget.navigatorKey, navigatorKey) ||
     oldWidget._restorationScopeId != _restorationScopeId;
@@ -184,7 +184,7 @@ class _AppNavigator extends StatefulWidget {
     required this.createHeroController,
   });
 
-  final AppRouterDelegate delegate;
+  final KRouterDelegate delegate;
   final LocationStack stack;
   final GlobalKey<NavigatorState> navigatorKey;
   final String restorationScopeId;
@@ -279,7 +279,7 @@ class _AppNavigatorState extends State<_AppNavigator> {
         restorationId: '$index#${shell.discriminator.discriminator}',
         child: shell.build(
           context,
-          navigator: AppNavigator(
+          navigator: KNavigator(
             delegate: widget.delegate,
             stack: item.children,
             navigatorKey: item.shellNavigator
@@ -316,7 +316,7 @@ class _AppNavigatorState extends State<_AppNavigator> {
                       },
                       child: (childItem.location as ShellLocation<Object?>).build(
                         context,
-                        navigator: AppNavigator(
+                        navigator: KNavigator(
                           delegate: widget.delegate,
                           stack: childItem.children,
                           navigatorKey: childItem.shellNavigator
@@ -409,7 +409,7 @@ class _StackListener extends StatefulWidget {
     this.child,
   }) : assert((child == null) != (builder == null), 'builder or child must be specified');
 
-  final AppRouterDelegate delegate;
+  final KRouterDelegate delegate;
   final LocationStack stack;
   final VoidCallback? onChange;
   final WidgetBuilder? builder;

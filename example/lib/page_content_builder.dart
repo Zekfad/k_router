@@ -15,23 +15,23 @@ final rnd = Random(1337);
 Widget pageContentBuilder(BuildContext context, BaseLocation location) => Column(
   mainAxisSize: MainAxisSize.min,
   children: [
-    Text('Hero tag for force back button: back_${AppNavigator.of(context).heroPrefixFor(location, allowCrossBorders: false)}'),
+    Text('Hero tag for force back button: back_${KNavigator.of(context).heroPrefixFor(location, allowCrossBorders: false)}'),
     Text(location.runtimeType.toString()),
     Wrap(
       children: [
         Hero(
-          tag: 'back_${AppNavigator.of(context).heroPrefixFor(location, allowCrossBorders: false)}',
+          tag: 'back_${KNavigator.of(context).heroPrefixFor(location, allowCrossBorders: false)}',
           child: CupertinoButton(
             child: const Text('< Force back'),
             onPressed: () {
-              AppNavigator.of(context).forcePop('test');
+              KNavigator.of(context).forcePop('test');
             },
           ),
         ),
         CupertinoButton(
           child: Text('< Back | ${rnd.nextInt(10000)}'),
           onPressed: () async {
-            await AppNavigator.of(context).maybePop('test');
+            await KNavigator.of(context).maybePop('test');
           },
         ),
         CupertinoButton(
@@ -47,21 +47,21 @@ Widget pageContentBuilder(BuildContext context, BaseLocation location) => Column
         CupertinoButton(
           child: const Text('Push book'),
           onPressed: () async {
-            final result = await AppNavigator.of(context).pushLocation(BookLocation(90));
+            final result = await KNavigator.of(context).pushLocation(BookLocation(90));
             print('Pushed book result: $result');
           },
         ),
         CupertinoButton(
           child: const Text('Replace book'),
           onPressed: () async {
-            final result = await AppNavigator.of(context).replaceLocation(BookLocation(120));
+            final result = await KNavigator.of(context).replaceLocation(BookLocation(120));
             print('Replaced with book result: $result');
           },
         ),
         CupertinoButton(
           child: const Text('Push normal'),
           onPressed: () {
-            AppNavigator.of(context).pushLocation(
+            KNavigator.of(context).pushLocation(
               SimpleLocation(uri: Uri.parse('/normal'), title: 'Normal'),
             );
           },
@@ -69,7 +69,7 @@ Widget pageContentBuilder(BuildContext context, BaseLocation location) => Column
         CupertinoButton(
           child: const Text('Push shell'),
           onPressed: () {
-            AppNavigator.of(context).pushLocation(
+            KNavigator.of(context).pushLocation(
               SimpleShellLocation(uri: Uri.parse('/shell'), title: 'Shell'),
             );
           },
@@ -77,7 +77,7 @@ Widget pageContentBuilder(BuildContext context, BaseLocation location) => Column
         CupertinoButton(
           child: const Text('Push multi'),
           onPressed: () {
-            AppNavigator.of(context).pushLocation(
+            KNavigator.of(context).pushLocation(
               SimpleMultiLocation(uri: Uri.parse('/multi'), title: 'Multi'),
             );
           },

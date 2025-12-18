@@ -1,24 +1,24 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
-import 'app_router_delegate.dart';
 import 'deep_link_result.dart';
+import 'k_router_delegate.dart';
 import 'location_stack.dart';
 
 
 /// K Router information provider propagates platform route changes (deep links
 /// and browser navigation) to router delegate.
-class AppRouteInformationProvider extends PlatformRouteInformationProvider {
+class KRouteInformationProvider extends PlatformRouteInformationProvider {
   /// @nodoc
   @internal
-  AppRouteInformationProvider({
+  KRouteInformationProvider({
     required this.delegate,
     required super.initialRouteInformation,
     this.deepLinkHandler,
   });
 
   /// K Router delegate.
-  final AppRouterDelegate delegate;
+  final KRouterDelegate delegate;
   /// Deep link handler.
   /// 
   /// If none provided deep linking functionality is disabled and all deep links

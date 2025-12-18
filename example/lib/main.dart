@@ -19,7 +19,7 @@ class MainApp extends StatefulWidget {
 
 class _MainAppState extends State<MainApp> {
   /// Cache router in a variable to preserve state during hot reload
-  final router = AppRouterConfig(
+  final router = KRouterConfig(
     initialLocation: SimpleLocation(
       uri: Uri(path: '/'),
       title: 'Home',

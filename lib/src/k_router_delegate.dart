@@ -1,17 +1,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
-import 'app_navigator.dart';
+import 'k_navigator.dart';
 import 'location.dart';
 import 'location_stack.dart';
 
 
-/// K Router delegate manages [AppNavigator] and processes updates from
+/// K Router delegate manages [KNavigator] and processes updates from
 /// route provider. 
-class AppRouterDelegate extends RouterDelegate<LocationStack> with ChangeNotifier, PopNavigatorRouterDelegateMixin {
+class KRouterDelegate extends RouterDelegate<LocationStack> with ChangeNotifier, PopNavigatorRouterDelegateMixin {
   /// @nodoc
   @internal
-  AppRouterDelegate(
+  KRouterDelegate(
     Location<Object?> initialLocation,
   ) : currentConfiguration = LocationStack.initial(initialLocation) {
     if (kFlutterMemoryAllocationsEnabled) {
@@ -43,7 +43,7 @@ class AppRouterDelegate extends RouterDelegate<LocationStack> with ChangeNotifie
     SynchronousFuture(currentConfiguration.leafActiveItem.remove());
 
   @override
-  Widget build(BuildContext context) => AppNavigator(
+  Widget build(BuildContext context) => KNavigator(
     delegate: this,
     stack: currentConfiguration,
     restorationScopeId: 'router_root',

@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
 
-import 'app_route_information_parser.dart';
-import 'app_route_information_provider.dart';
-import 'app_router_delegate.dart';
 import 'deep_link_result.dart';
+import 'k_route_information_parser.dart';
+import 'k_route_information_provider.dart';
+import 'k_router_delegate.dart';
 import 'location.dart';
 import 'location_codec.dart';
 import 'location_stack.dart';
@@ -16,7 +16,7 @@ import 'location_stack.dart';
 /// This is the only intended router initialization, because some parts are very
 /// tightly connected and requires specific configuration to work property.
 /// {@endtemplate}
-class AppRouterConfig extends RouterConfig<LocationStack> {
+class KRouterConfig extends RouterConfig<LocationStack> {
   /// {@macro k_router_router_config}
   /// 
   /// [initialLocation] is used as initial location and may be build at least
@@ -31,13 +31,13 @@ class AppRouterConfig extends RouterConfig<LocationStack> {
   /// broken state in browser if user changes URL). Initial deep link is also
   /// handled by this function and can replace [initialLocation] when
   /// [DeepLinkResult.replaceStack] is returned.
-  factory AppRouterConfig({
+  factory KRouterConfig({
     required Location<Object?> initialLocation,
     required LocationCodecMap locationCodecs,
     DeepLinkHandler? onDeepLink,
   }) {
-    final delegate = AppRouterDelegate(initialLocation);
-    final parser = AppRouteInformationParser(
+    final delegate = KRouterDelegate(initialLocation);
+    final parser = KRouteInformationParser(
       locationCodecs: locationCodecs,
     );
     final initialUri = WidgetsFlutterBinding.ensureInitialized().platformDispatcher.defaultRouteName;
@@ -59,7 +59,7 @@ class AppRouterConfig extends RouterConfig<LocationStack> {
           LocationStack.initial(location),
       };
     }
-    final provider = AppRouteInformationProvider(
+    final provider = KRouteInformationProvider(
       initialRouteInformation: RouteInformation(
         uri: currentConfiguration.leafActiveItem.location.uri,
         state: currentConfiguration,
@@ -67,7 +67,7 @@ class AppRouterConfig extends RouterConfig<LocationStack> {
       deepLinkHandler: onDeepLink,
       delegate: delegate,
     );
-    return AppRouterConfig._(
+    return KRouterConfig._(
       routeInformationProvider: provider,
       routeInformationParser: parser,
       routerDelegate: delegate,
@@ -75,7 +75,7 @@ class AppRouterConfig extends RouterConfig<LocationStack> {
     );
   }
 
-  AppRouterConfig._({
+  KRouterConfig._({
     required super.routeInformationProvider,
     required super.routeInformationParser,
     required super.routerDelegate,
