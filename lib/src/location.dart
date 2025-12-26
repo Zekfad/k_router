@@ -126,18 +126,20 @@ abstract interface class MultiLocation<T> implements LocationWithChildren<T> {
   @override
   List<ShellLocation<Object?>> get children;
 
+  /// Index of active shell.
+  int get activeIndex;
+  set activeIndex(int value);
+
   @override
   Page<T> buildPage(BuildContext context, {
     required LocalKey key,
     required String name,
     required String restorationId,
     required Widget child,
-    int? activeIndex,
   });
 
   @override
   Widget build(BuildContext context, {
-    int? activeIndex,
     List<Widget>? children,
   });
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:meta/meta.dart';
@@ -11,33 +12,79 @@ import 'location_stack.dart';
 import 'location_stack_item.dart';
 
 
+@internal
+const kNavigatorFactory = KNavigator._;
+
 /// K Router navigator provides location stack controls to descendants.
 class KNavigator extends InheritedWidget {
   /// @nodoc
-  @internal
-  KNavigator({
+  KNavigator._new({
     required KRouterDelegate delegate,
     required LocationStack stack,
     required this.navigatorKey,
     required String restorationScopeId,
+    required GlobalKey<_KNavigatorState> kNavigatorKey,
     bool createHeroController = true,
-    super.key,
-  }) : _stack = stack, _restorationScopeId = restorationScopeId, super(
-    child: _AppNavigator(
-      delegate: delegate,
-      stack: stack,
-      navigatorKey: navigatorKey,
-      restorationScopeId: restorationScopeId,
-      createHeroController: createHeroController,
-    ),
+  }) :
+    _stack = stack,
+    _restorationScopeId = restorationScopeId,
+    _kNavigatorKey = kNavigatorKey,
+    super(
+      child: _KNavigator(
+        key: kNavigatorKey,
+        delegate: delegate,
+        stack: stack,
+        navigatorKey: navigatorKey,
+        restorationScopeId: restorationScopeId,
+        createHeroController: createHeroController,
+      ),
+    );
+
+  /// @nodoc
+  factory KNavigator._({
+    required KRouterDelegate delegate,
+    required LocationStack stack,
+    required GlobalKey<NavigatorState> navigatorKey,
+    required String restorationScopeId,
+    bool createHeroController = true,
+  }) => KNavigator._new(
+    delegate: delegate,
+    stack: stack,
+    navigatorKey: navigatorKey,
+    restorationScopeId: restorationScopeId,
+    createHeroController: createHeroController,
+    kNavigatorKey: GlobalKey(debugLabel: '_kNavigator#$restorationScopeId'),
   );
 
+  final GlobalKey<_KNavigatorState> _kNavigatorKey;
   /// Raw navigator key.
-  /// 
+  ///
   /// If router is used correctly you dont need it.
   final GlobalKey<NavigatorState> navigatorKey;
   final LocationStack _stack;
   final String _restorationScopeId;
+
+  /// Emits null values when managed location stack changes.
+  Stream<void> get changes => _kNavigatorKey.currentState!._changes;
+
+  /// Pushes new location to this navigator.
+  @awaitNotRequired
+  Future<T?> pushLocation<T>(Location<T> location) =>
+    _stack.pushLocation(location);
+
+  /// Removes current location from this navigator and pushes new location
+  /// in place of it.
+  @awaitNotRequired
+  Future<T?> replaceLocation<T>(Location<T> location) {
+    final future = _stack.pushLocation(location);
+    final removed = _stack.activeItem!.previous!.remove();
+    assert(removed, 'failed to remove previous item during replace');
+    return future;
+  }
+
+  /// Checks if navigator can pop current location.
+  bool canPop() =>
+    navigatorKey.currentState!.canPop();
 
   /// Tries to pop current location of this navigator from the navigation stack.
   Future<bool> maybePop<T extends Object>([ T? result, ]) {
@@ -47,7 +94,7 @@ class KNavigator extends InheritedWidget {
 
   /// Forcefully pops current location of this navigator location disregarding
   /// [Page.canPop].
-  /// 
+  ///
   /// You must be careful when using this method because it can easily lead to
   /// irrecoverable invalid state of router.
   void forcePop<T extends Object>([ T? result, ]) {
@@ -70,38 +117,48 @@ class KNavigator extends InheritedWidget {
     }
   }
 
-  /// Pushes new location to this navigator.
-  @awaitNotRequired
-  Future<T?> pushLocation<T>(Location<T> location) =>
-    _stack.pushLocation(location);
-
-
-  /// Removes current location from this navigator and pushes new location
-  /// in place of it.
-  @awaitNotRequired
-  Future<T?> replaceLocation<T>(Location<T> location) {
-    final future = _stack.pushLocation(location);
-    final removed = _stack.activeItem!.previous!.remove();
-    assert(removed, 'failed to remove previous item during replace');
-    return future;
-  }
-
   /// Brings to top existing location on a given index.
-  void selectChild(int index) {
+  void bringToTopLocationAt(int index) {
     final result = _stack.selectChild(index);
     assert(result, 'Cannot select requested child: index is out of bounds');
   }
 
-  /// Try to get [KNavigator] from this [context].
-  static KNavigator? maybeOf(BuildContext context) =>
-    context.dependOnInheritedWidgetOfExactType<KNavigator>();
-
-  /// Require [KNavigator] from this [context].
-  static KNavigator of(BuildContext context) {
-    final result = maybeOf(context);
-    assert(result != null, 'No AppNavigator found in context');
-    return result!;
+  /// Retrieves active location of this navigator.
+  Location<Object?>? get activeLocation {
+    if (_stack.items.isEmpty) {
+      return null;
+    }
+    // active item is always present for non empty stacks
+    return _stack.activeItem!.location;
   }
+
+  /// Retrieves current locations stack of this navigator.
+  ///
+  /// Returned list is ordered by push calls which means [activeLocation] is
+  /// __NOT__ always the last item.
+  ///
+  /// This getter is relatively expensive (required full linked list iteration)
+  /// and returns snapshot of current stack.
+  /// You're free to modify returned list, it wont affect routing.
+  List<Location<Object?>> get locationsStack =>
+    _stack.items.map((e) => e.location).toList();
+
+  /// The first [Location] in stack satisfying [test], or `null` if there are
+  /// none.
+  Location<Object?>? firstLocationWhereOrNull(
+    bool Function(Location<Object?> location) test
+  ) => _stack.items.firstWhereOrNull(
+    (element) => test(element.location),
+  )?.location;
+
+  /// The first [Location] whose value and index satisfies [test].
+  ///
+  /// Returns `null` if there are no element and index satisfying [test].
+  Location<Object?>? firstLocationWhereIndexedOrNull(
+    bool Function(int index, Location<Object?> location) test
+  ) => _stack.items.firstWhereIndexedOrNull(
+    (index, element) => test(index, element.location),
+  )?.location;
 
   /// Returns stack path for the [location] if it is mounted.
   String? stackPathOf<T>(Location<T> location) {
@@ -120,18 +177,18 @@ class KNavigator extends InheritedWidget {
   }
 
   /// Returns hero prefix for the [location] if it is mounted.
-  /// 
+  ///
   /// It will end with `/*` for most of location except for shell locations that
   /// are direct descendants of multi location for which it will end with slash
   /// plus corresponding index of shell.
-  /// 
+  ///
   /// If you want to animate hero to a specific shell in multi location, replace
   /// `*` with target shell index.
-  /// 
+  ///
   /// Beware that Flutter allows animating hero from outer navigator to inner
   /// if it is part of the top-most route in that nested Navigator and if that
   /// route is also a PageRoute.
-  /// 
+  ///
   /// If you expect your hero to be present twice (as top location and inside of
   /// nested navigator consider disabling [allowCrossBorders], that will make
   /// returned prefix unique to [location]'s level of nesting).
@@ -160,6 +217,67 @@ class KNavigator extends InheritedWidget {
     return path;
   }
 
+  /// Try to get [BuildContext] of shell inside of [location].
+  static BuildContext? getContextOfShell(ShellLocation<Object?> location) {
+    final item = LocationStackItem.locationCache[location];
+    assert(item != null, 'Unmounted location.');
+    // activeItem is always present, because it's impossible to create item for
+    // multi location with no children
+    return item?.shellNavigator?.currentContext;
+  }
+
+  /// Try to get [BuildContext] of active shell inside of [location].
+  static BuildContext? getContextOfActiveShell(MultiLocation<Object?> location) {
+    final item = LocationStackItem.locationCache[location];
+    assert(item != null, 'Unmounted location.');
+    // activeItem is always present, because it's impossible to create item for
+    // multi location with no children
+    return item?.children.activeItem!.shellNavigator?.currentContext;
+  }
+
+  /// Try to get [KNavigator] from this [context].
+  static KNavigator? maybeOf(BuildContext context) =>
+    context.dependOnInheritedWidgetOfExactType<KNavigator>();
+
+  /// Try to get [KNavigator] from context of shell inside of [location].
+  static KNavigator? maybeOfShell(ShellLocation<Object?> location) {
+    final context = getContextOfShell(location);
+    if (context == null) {
+      return null;
+    }
+    return maybeOf(context);
+  }
+
+  /// Try to get [KNavigator] from context of active shell inside of [location].
+  static KNavigator? maybeOfActiveShell(MultiLocation<Object?> location) {
+    final context = getContextOfActiveShell(location);
+    if (context == null) {
+      return null;
+    }
+    return maybeOf(context);
+  }
+
+  /// Require [KNavigator] from context of shell inside of [location].
+  static KNavigator ofShell(ShellLocation<Object?> location) {
+    final result = maybeOfShell(location);
+    assert(result != null, 'No KNavigator found in shell context');
+    return result!;
+  }
+
+  /// Require [KNavigator] from context of active shell inside of [location].
+  static KNavigator ofActiveShell(MultiLocation<Object?> location) {
+    final result = maybeOfActiveShell(location);
+    assert(result != null, 'No KNavigator found in active shell context');
+    return result!;
+  }
+
+  /// Require [KNavigator] from this [context].
+  static KNavigator of(BuildContext context) {
+    final result = maybeOf(context);
+    assert(result != null, 'No KNavigator found in context');
+    return result!;
+  }
+
   @override
   bool updateShouldNotify(covariant KNavigator oldWidget) =>
     !identical(oldWidget._stack, _stack) ||
@@ -171,17 +289,22 @@ class KNavigator extends InheritedWidget {
     super.debugFillProperties(properties);
     properties
       ..add(DiagnosticsProperty('navigatorKey', navigatorKey))
-      ..add(DiagnosticsProperty('_stack', _stack));
+      ..add(DiagnosticsProperty('activeLocation', activeLocation))
+      ..add(IterableProperty('locationsStack', locationsStack))
+      ..add(DiagnosticsProperty('changes', changes))
+      ..add(DiagnosticsProperty('_stack', _stack))
+      ..add(StringProperty('_restorationScopeId', _restorationScopeId));
   }
 }
 
-class _AppNavigator extends StatefulWidget {
-  const _AppNavigator({
+class _KNavigator extends StatefulWidget {
+  const _KNavigator({
     required this.delegate,
     required this.stack,
     required this.navigatorKey,
     required this.restorationScopeId,
     required this.createHeroController,
+    super.key,
   });
 
   final KRouterDelegate delegate;
@@ -191,7 +314,7 @@ class _AppNavigator extends StatefulWidget {
   final bool createHeroController;
 
   @override
-  State<_AppNavigator> createState() => _AppNavigatorState();
+  State<_KNavigator> createState() => _KNavigatorState();
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
@@ -205,13 +328,16 @@ class _AppNavigator extends StatefulWidget {
   }
 }
 
-class _AppNavigatorState extends State<_AppNavigator> {
+class _KNavigatorState extends State<_KNavigator> {
   late final List<NavigatorObserver> _observers = [
-    _AppNavigatorObserver(
+    _KNavigatorObserver(
       didPopRoute: _onDidPopRoute,
     ),
   ];
   HeroController? _heroController;
+
+  late final _changesController = StreamController<void>.broadcast();
+  Stream<void> get _changes => _changesController.stream;
 
   @override
   void initState() {
@@ -222,7 +348,7 @@ class _AppNavigatorState extends State<_AppNavigator> {
   }
 
   @override
-  void didUpdateWidget(covariant _AppNavigator oldWidget) {
+  void didUpdateWidget(covariant _KNavigator oldWidget) {
     if (oldWidget.createHeroController && !widget.createHeroController) {
       _heroController!.dispose();
     }
@@ -246,6 +372,7 @@ class _AppNavigatorState extends State<_AppNavigator> {
   void dispose() {
     _heroController?.dispose();
     _observers.clear();
+    _changesController.close().ignore();
     super.dispose();
   }
 
@@ -279,7 +406,7 @@ class _AppNavigatorState extends State<_AppNavigator> {
         restorationId: '$index#${shell.discriminator.discriminator}',
         child: shell.build(
           context,
-          navigator: KNavigator(
+          navigator: kNavigatorFactory(
             delegate: widget.delegate,
             stack: item.children,
             navigatorKey: item.shellNavigator
@@ -293,10 +420,8 @@ class _AppNavigatorState extends State<_AppNavigator> {
         key: ValueKey(location),
         name: location.uri.toString(),
         restorationId: '$index#${location.discriminator.discriminator}',
-        activeIndex: item.children.activeItemIndex,
         child: location.build(
           context,
-          activeIndex: item.children.activeItemIndex,
           children: [
             for (final (childIndex, childItem) in item.children.items.indexed)
               RestorationScope(
@@ -316,7 +441,7 @@ class _AppNavigatorState extends State<_AppNavigator> {
                       },
                       child: (childItem.location as ShellLocation<Object?>).build(
                         context,
-                        navigator: KNavigator(
+                        navigator: kNavigatorFactory(
                           delegate: widget.delegate,
                           stack: childItem.children,
                           navigatorKey: childItem.shellNavigator
@@ -345,11 +470,17 @@ class _AppNavigatorState extends State<_AppNavigator> {
     final child = _StackListener(
       delegate: widget.delegate,
       stack: widget.stack,
+      onChange: () {
+        if (_changesController.hasListener) {
+          _changesController.add(null);
+        }
+      },
       builder: (context) {
         if (widget.stack.items.isEmpty) {
           return const SizedBox.expand();
         }
         final List<Page<Object?>> pages;
+        assert(widget.stack.activeItem != null, 'no active item');
         if (widget.stack.activeItem case final active?) {
           pages = [];
           late Page<Object?> activePage;
@@ -387,8 +518,8 @@ class _AppNavigatorState extends State<_AppNavigator> {
   }
 }
 
-class _AppNavigatorObserver extends NavigatorObserver {
-  _AppNavigatorObserver({
+class _KNavigatorObserver extends NavigatorObserver {
+  _KNavigatorObserver({
     required this.didPopRoute,
   });
 

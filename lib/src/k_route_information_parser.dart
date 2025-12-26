@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import 'internal_locations.dart';
+import 'location.dart';
 import 'location_codec.dart';
 import 'location_stack.dart';
 import 'location_stack_item.dart';
@@ -144,6 +145,9 @@ class KRouteInformationParser extends RouteInformationParser<LocationStack> {
             ).decode(location),
             children: childStack,
           );
+          if (item.location case final MultiLocation<Object?> multiLocation) {
+            multiLocation.activeIndex = item.children.activeItemIndex;
+          }
           stackChildren.add(item);
           if (i == active) {
             activeItem = item;

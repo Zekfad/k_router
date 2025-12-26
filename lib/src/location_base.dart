@@ -108,13 +108,25 @@ abstract base class BaseMultiLocation<T> extends BaseLocation<T> implements Mult
     title: options.title,
   );
 
+  int _activeIndex = 0;
+
+  @override
+  int get activeIndex => _activeIndex;
+
+  @override
+  set activeIndex(int value) {
+    if (value != _activeIndex) {
+      _activeIndex = value;
+      notifyListeners();
+    }
+  }
+
   @override
   Page<T> buildPage(BuildContext context, {
     required LocalKey key,
     required String name,
     required String restorationId,
     required Widget child,
-    int? activeIndex,
   }) => MaterialPage(
     key: key,
     name: name,

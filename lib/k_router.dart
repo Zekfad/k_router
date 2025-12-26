@@ -1,5 +1,5 @@
 export 'src/deep_link_result.dart' show DeepLinkResult;
-export 'src/k_navigator.dart';
+export 'src/k_navigator.dart' hide kNavigatorFactory;
 export 'src/k_router_config.dart';
 export 'src/location.dart' hide LocationWithChildren;
 export 'src/location_base.dart';

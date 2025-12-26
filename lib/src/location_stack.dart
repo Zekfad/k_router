@@ -113,6 +113,9 @@ final class LocationStack extends ChangeNotifier {
         newItem.children.pushLocation(child, notify)
           .catchError(popErrorHandler).ignore();
       }
+      if (location case final MultiLocation<Object?> multiLocation) {
+        newItem.children.selectChild(multiLocation.activeIndex, notify);
+      }
     }
     _registerItem(newItem);
     if (notify) {
@@ -152,7 +155,7 @@ final class LocationStack extends ChangeNotifier {
     throw StateError('Cannot find active item index');
   }
 
-  bool selectChild(int index) {
+  bool selectChild(int index, [ bool notify = true, ]) {
     if (index < 0 || index >= items.length) {
       return false;
     }
@@ -171,7 +174,12 @@ final class LocationStack extends ChangeNotifier {
       return true;
     }
     activeItem = newActiveItem;
-    notifyListeners();
+    if (parentItem?.location case final MultiLocation<Object?> location) {
+      location.activeIndex = index;
+    }
+    if (notify) {
+      notifyListeners();
+    }
     return true;
   }
 
@@ -186,6 +194,9 @@ final class LocationStack extends ChangeNotifier {
 
   void didUpdateItem(LocationStackItem item) {
     // force rebuild of page from the scratch
+    if (item.location case final MultiLocation<Object?> location) {
+      item.children.selectChild(location.activeIndex);
+    }
     item.reset();
     notifyListeners();
   }

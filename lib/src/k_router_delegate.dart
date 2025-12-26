@@ -43,7 +43,7 @@ class KRouterDelegate extends RouterDelegate<LocationStack> with ChangeNotifier,
     SynchronousFuture(currentConfiguration.leafActiveItem.remove());
 
   @override
-  Widget build(BuildContext context) => KNavigator(
+  Widget build(BuildContext context) => kNavigatorFactory(
     delegate: this,
     stack: currentConfiguration,
     restorationScopeId: 'router_root',

@@ -76,9 +76,24 @@ class KRouterConfig extends RouterConfig<LocationStack> {
   }
 
   KRouterConfig._({
-    required super.routeInformationProvider,
-    required super.routeInformationParser,
-    required super.routerDelegate,
-    required super.backButtonDispatcher,
+    required KRouteInformationProvider super.routeInformationProvider,
+    required KRouteInformationParser super.routeInformationParser,
+    required KRouterDelegate super.routerDelegate,
+    required RootBackButtonDispatcher super.backButtonDispatcher,
   });
+
+  @override
+  KRouteInformationProvider get routeInformationProvider => super.routeInformationProvider! as KRouteInformationProvider;
+  @override
+  KRouteInformationParser get routeInformationParser => super.routeInformationParser! as KRouteInformationParser;
+  @override
+  KRouterDelegate get routerDelegate => super.routerDelegate as KRouterDelegate;
+  @override
+  RootBackButtonDispatcher get backButtonDispatcher => super.backButtonDispatcher! as RootBackButtonDispatcher;
+
+  /// Dispose this router and it's associated resources.
+  void dispose() {
+    routeInformationProvider.dispose();
+    routerDelegate.dispose();
+  }
 }

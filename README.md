@@ -24,9 +24,21 @@ Here's the list of features this implementation provides:
   for a better handling of __browser back and forward__ action.
 
 Currently this router provides the bare minimum required for it's proper
-operation. You have to bring your own Uri-to-Location mapping mechanism if you
-need it.
+operation. Which creates following limitations:
 
-Currently this router __does not__ support predictive back with shell or multi
-locations because of
-[Flutter#152323](https://github.com/flutter/flutter/issues/152323).
+* You have to bring your own Uri-to-Location mapping mechanism if you need it.
+  (tip think about radix tree/prefix tree).
+* Since router allows restoration to basically any previous state, this creates
+  a vector for route guards bypass, so this router __DOES NOT__ provide any
+  guards for locations.
+
+  You're advised to create your own abstraction for checking location's required
+  permissions AND implementing same check inside of location's UI. This is
+  needed for case when location guard mechanism depends on external state and
+  that state is no longer valid after restoration.
+  (For example: user leaves app at profile settings page, then revokes app
+  session from the browser, after restoration app will be at profile page of no
+  longer authorized user, so you should to handle that)
+
+* Currently this router __DOES NOT__ support predictive back with shell or multi
+  locations because of [Flutter#152323](https://github.com/flutter/flutter/issues/152323).

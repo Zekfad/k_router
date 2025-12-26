@@ -23,7 +23,6 @@ base mixin _SimpleMultiLocation<T> on BaseMultiLocation<T> {
     required String name,
     required String restorationId,
     required Widget child,
-    int? activeIndex,
   }) => CupertinoPage(
     key: key,
     name: name,
@@ -35,7 +34,6 @@ base mixin _SimpleMultiLocation<T> on BaseMultiLocation<T> {
   @override
   Widget build(BuildContext context, {
     List<Widget>? children,
-    int? activeIndex,
   }) =>
     CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
@@ -43,6 +41,18 @@ base mixin _SimpleMultiLocation<T> on BaseMultiLocation<T> {
       ),
       child: Column(
         children: [
+          Row(
+            children: [
+            CupertinoButton(
+                child: const Text('Select 0'),
+                onPressed: () => activeIndex = 0,
+              ),
+              CupertinoButton(
+                child: const Text('Select 1'),
+                onPressed: () => activeIndex = 1,
+              ),
+            ],
+          ),
           // page(context, this),
           Expanded(
             child: Row(
