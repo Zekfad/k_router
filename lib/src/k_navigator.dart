@@ -223,7 +223,11 @@ class KNavigator extends InheritedWidget {
     assert(item != null, 'Unmounted location.');
     // activeItem is always present, because it's impossible to create item for
     // multi location with no children
-    return item?.shellNavigator?.currentContext;
+    final context = item?.shellNavigatorKey?.currentContext;
+    if (context == null) {
+      return null;
+    }
+    return (context.mounted) ? context : null;
   }
 
   /// Try to get [BuildContext] of active shell inside of [location].
@@ -232,7 +236,7 @@ class KNavigator extends InheritedWidget {
     assert(item != null, 'Unmounted location.');
     // activeItem is always present, because it's impossible to create item for
     // multi location with no children
-    return item?.children.activeItem!.shellNavigator?.currentContext;
+    return item?.children.activeItem!.shellNavigatorKey?.currentContext;
   }
 
   /// Try to get [KNavigator] from this [context].
@@ -241,20 +245,16 @@ class KNavigator extends InheritedWidget {
 
   /// Try to get [KNavigator] from context of shell inside of [location].
   static KNavigator? maybeOfShell(ShellLocation<Object?> location) {
-    final context = getContextOfShell(location);
-    if (context == null) {
-      return null;
-    }
-    return maybeOf(context);
+    final item = LocationStackItem.locationCache[location];
+    assert(item != null, 'Unmounted location.');
+    return item?.shellNavigator;
   }
 
   /// Try to get [KNavigator] from context of active shell inside of [location].
   static KNavigator? maybeOfActiveShell(MultiLocation<Object?> location) {
-    final context = getContextOfActiveShell(location);
-    if (context == null) {
-      return null;
-    }
-    return maybeOf(context);
+    final item = LocationStackItem.locationCache[location];
+    assert(item != null, 'Unmounted location.');
+    return item?.children.activeItem!.shellNavigator;
   }
 
   /// Require [KNavigator] from context of shell inside of [location].
@@ -389,7 +389,9 @@ class _KNavigatorState extends State<_KNavigator> {
         return;
       }
       if (item.remove(route.popped)) {
-        item.shellNavigator = null;
+        item
+          ..shellNavigatorKey = null
+          ..shellNavigator = null;
       } else {
         // add back last item to prevent black screen
         widget.stack.triggerUpdate();
@@ -406,10 +408,10 @@ class _KNavigatorState extends State<_KNavigator> {
         restorationId: '$index#${shell.discriminator.discriminator}',
         child: shell.build(
           context,
-          navigator: kNavigatorFactory(
+          navigator: item.shellNavigator = kNavigatorFactory(
             delegate: widget.delegate,
             stack: item.children,
-            navigatorKey: item.shellNavigator
+            navigatorKey: item.shellNavigatorKey
               ??= GlobalKey(debugLabel: 'shell nested navigator ${widget.restorationScopeId}/$index'),
             restorationScopeId: '${widget.restorationScopeId}/$index',
           ),
@@ -441,10 +443,10 @@ class _KNavigatorState extends State<_KNavigator> {
                       },
                       child: (childItem.location as ShellLocation<Object?>).build(
                         context,
-                        navigator: kNavigatorFactory(
+                        navigator: childItem.shellNavigator = kNavigatorFactory(
                           delegate: widget.delegate,
                           stack: childItem.children,
-                          navigatorKey: childItem.shellNavigator
+                          navigatorKey: childItem.shellNavigatorKey
                             ??= GlobalKey(debugLabel: 'multi nested navigator ${widget.restorationScopeId}/$index/$childIndex'),
                           restorationScopeId: '${widget.restorationScopeId}/$index/$childIndex',
                         ),

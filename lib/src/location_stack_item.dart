@@ -4,6 +4,7 @@ import 'dart:collection';
 import 'package:flutter/widgets.dart';
 import 'package:meta/meta.dart';
 
+import 'k_navigator.dart';
 import 'location.dart';
 import 'location_stack.dart';
 import 'location_stack_items_list.dart';
@@ -52,7 +53,8 @@ final class LocationStackItem extends LinkedListEntry<LocationStackItem> {
   }
   /// Cached encoded location
   Map<Object?, Object?>? encoded;
-  GlobalKey<NavigatorState>? shellNavigator;
+  GlobalKey<NavigatorState>? shellNavigatorKey;
+  KNavigator? shellNavigator;
 
   @override
   LocationStackItemsList? get list => super.list as LocationStackItemsList?;
