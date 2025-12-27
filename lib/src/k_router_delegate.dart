@@ -6,21 +6,29 @@ import 'location.dart';
 import 'location_stack.dart';
 
 
+/// Signature for callback that is executed next frame after router is
+/// initialized. [isRestored] shows whether app was restored or cold started.
+typedef OnDidInitialize = void Function(GlobalKey<NavigatorState> navigatorKey, bool isRestored);
+
 /// K Router delegate manages [KNavigator] and processes updates from
-/// route provider. 
+/// route provider.
 class KRouterDelegate extends RouterDelegate<LocationStack> with ChangeNotifier, PopNavigatorRouterDelegateMixin {
   /// @nodoc
   @internal
-  KRouterDelegate(
-    Location<Object?> initialLocation,
-  ) : currentConfiguration = LocationStack.initial(initialLocation) {
+  KRouterDelegate({
+    required Location<Object?> initialLocation,
+    this.onDidInitialize,
+  }) : currentConfiguration = LocationStack.initial(initialLocation) {
     if (kFlutterMemoryAllocationsEnabled) {
       ChangeNotifier.maybeDispatchObjectCreation(this);
     }
   }
 
   @override
-  final GlobalKey<NavigatorState> navigatorKey = GlobalKey(debugLabel: 'root navigator');
+  final GlobalKey<NavigatorState> navigatorKey = GlobalKey(debugLabel: 'k#root');
+
+  /// Callback that is executed next frame after router is initialized.
+  final OnDidInitialize? onDidInitialize;
 
   @override
   LocationStack currentConfiguration;
@@ -35,8 +43,27 @@ class KRouterDelegate extends RouterDelegate<LocationStack> with ChangeNotifier,
   }
 
   @override
-  Future<void> setRestoredRoutePath(LocationStack configuration) =>
-    setNewRoutePath(configuration);
+  Future<void> setInitialRoutePath(LocationStack configuration) {
+    final result = setNewRoutePath(configuration);
+    _onDidInitialize(false);
+    return result;
+  }
+
+  @override
+  Future<void> setRestoredRoutePath(LocationStack configuration) {
+    final result = setNewRoutePath(configuration);
+    _onDidInitialize(true);
+    return result;
+  }
+
+  void _onDidInitialize(bool isRestored) {
+    if (onDidInitialize case final callback?) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => callback(navigatorKey, true),
+        debugLabel: 'KRouterDelegate#_onDidInitialize'
+      );
+    }
+  }
 
   @override
   Future<bool> popRoute() =>
@@ -58,7 +85,7 @@ class KRouterDelegate extends RouterDelegate<LocationStack> with ChangeNotifier,
   }
 
   /// Trigger update:
-  /// 
+  ///
   /// * Rebuild root navigator.
   /// * Update platform's state (URI and restoration data).
   void triggerUpdate() => notifyListeners();

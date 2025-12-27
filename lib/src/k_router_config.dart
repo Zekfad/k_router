@@ -31,12 +31,19 @@ class KRouterConfig extends RouterConfig<LocationStack> {
   /// broken state in browser if user changes URL). Initial deep link is also
   /// handled by this function and can replace [initialLocation] when
   /// [DeepLinkResult.replaceStack] is returned.
+  /// 
+  /// [onDidInitialize] is a callback that allows you to run logic after router
+  /// initialization and tells you whether app was restored or cold started.
   factory KRouterConfig({
     required Location<Object?> initialLocation,
     required LocationCodecMap locationCodecs,
     DeepLinkHandler? onDeepLink,
+    OnDidInitialize? onDidInitialize,
   }) {
-    final delegate = KRouterDelegate(initialLocation);
+    final delegate = KRouterDelegate(
+      initialLocation: initialLocation,
+      onDidInitialize: onDidInitialize,
+    );
     final parser = KRouteInformationParser(
       locationCodecs: locationCodecs,
     );
