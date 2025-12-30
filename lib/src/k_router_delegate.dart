@@ -59,7 +59,7 @@ class KRouterDelegate extends RouterDelegate<LocationStack> with ChangeNotifier,
   void _onDidInitialize(bool isRestored) {
     if (onDidInitialize case final callback?) {
       WidgetsBinding.instance.addPostFrameCallback(
-        (_) => callback(navigatorKey, true),
+        (_) => callback(navigatorKey, isRestored),
         debugLabel: 'KRouterDelegate#_onDidInitialize'
       );
     }
