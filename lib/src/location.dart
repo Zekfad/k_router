@@ -49,7 +49,7 @@ abstract interface class Location<T> implements Listenable {
   /// you should reference page only though [Route.settings] getter which will
   /// always point to an actual page object.
   /// 
-  /// {@template location_build_context}
+  /// {@template k_router_location_build_context}
   /// This method is executed in [context] of [KNavigator], you may consider
   /// using [Builder] or [StatefulWidget] for acquiring new context.
   /// {@endtemplate}
@@ -66,7 +66,7 @@ abstract interface class Location<T> implements Listenable {
   /// 
   /// Result of this method will be passed to [buildPage] as `child` parameter.
   /// 
-  /// {@macro location_build_context}
+  /// {@macro k_router_location_build_context}
   Widget build(BuildContext context);
 
   /// Dispose this location and it's resources.
@@ -76,7 +76,7 @@ abstract interface class Location<T> implements Listenable {
 
 @internal
 sealed class LocationWithChildren<T> implements Location<T> {
-  /// {@template location_children}
+  /// {@template k_router_location_children}
   /// This list is not reactive and checked only when you push location.
   /// 
   /// __MUST__ not be empty.
@@ -89,7 +89,7 @@ sealed class LocationWithChildren<T> implements Location<T> {
 abstract interface class ShellLocation<T> implements LocationWithChildren<T> {
   /// Initial children for this shell.
   /// 
-  /// {@macro location_children}
+  /// {@macro k_router_location_children}
   @override
   List<Location<Object?>> get children;
 
@@ -106,7 +106,7 @@ abstract interface class ShellLocation<T> implements LocationWithChildren<T> {
   /// Result of this method will be passed to [buildPage] as `child` parameter
   /// or it can be used inline as part of shell for multi location.
   /// 
-  /// {@macro location_build_context}
+  /// {@macro k_router_location_build_context}
   @override
   Widget build(BuildContext context, {
     Widget? navigator,
@@ -122,7 +122,7 @@ abstract interface class ShellLocation<T> implements LocationWithChildren<T> {
 abstract interface class MultiLocation<T> implements LocationWithChildren<T> {
   /// Initial child shells for this multi location.
   /// 
-  /// {@macro location_children}
+  /// {@macro k_router_location_children}
   @override
   List<ShellLocation<Object?>> get children;
 
