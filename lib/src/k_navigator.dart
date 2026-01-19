@@ -27,6 +27,7 @@ class KNavigator extends InheritedWidget {
     required GlobalKey<_KNavigatorState> kNavigatorKey,
     bool createHeroController = true,
   }) :
+    _delegate = delegate,
     _stack = stack,
     _restorationScopeId = restorationScopeId,
     _kNavigatorKey = kNavigatorKey,
@@ -62,6 +63,7 @@ class KNavigator extends InheritedWidget {
   ///
   /// If router is used correctly you dont need it.
   final GlobalKey<NavigatorState> navigatorKey;
+  final KRouterDelegate _delegate;
   final LocationStack _stack;
   final String _restorationScopeId;
 
@@ -226,6 +228,10 @@ class KNavigator extends InheritedWidget {
     }
     return path;
   }
+
+  /// Checks whether [context] is part of leaf active location of root navigator.
+  static bool isContextActive(BuildContext context) =>
+    of(context)._delegate.currentConfiguration.leafActiveItem.location == CurrentLocation.of(context);
 
   /// Try to get [BuildContext] of shell inside of [location].
   static BuildContext? getContextOfShell(ShellLocation<Object?> location) {
