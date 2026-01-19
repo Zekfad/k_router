@@ -133,6 +133,15 @@ class KNavigator extends InheritedWidget {
     return _stack.activeItem!.location;
   }
 
+  /// Retrieves deepest leaf active location of this navigator.
+  Location<Object?>? get leafActiveLocation {
+    if (_stack.items.isEmpty) {
+      return null;
+    }
+    // active item is always present for non empty stacks
+    return _stack.leafActiveItem.location;
+  }
+
   /// Retrieves current locations stack of this navigator.
   ///
   /// Returned list is ordered by push calls which means [activeLocation] is
@@ -291,6 +300,7 @@ class KNavigator extends InheritedWidget {
     properties
       ..add(DiagnosticsProperty('navigatorKey', navigatorKey))
       ..add(DiagnosticsProperty('activeLocation', activeLocation))
+      ..add(DiagnosticsProperty('leafActiveLocation', leafActiveLocation))
       ..add(IterableProperty('locationsStack', locationsStack))
       ..add(DiagnosticsProperty('changes', changes))
       ..add(DiagnosticsProperty('_stack', _stack))
