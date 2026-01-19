@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:meta/meta.dart';
 
+import 'current_location.dart';
 import 'k_router_delegate.dart';
 import 'location.dart';
 import 'location_pop_type.dart';
@@ -406,14 +407,18 @@ class _KNavigatorState extends State<_KNavigator> {
         key: ValueKey(shell),
         name: shell.uri.toString(),
         restorationId: '$index#${shell.discriminator.discriminator}',
-        child: shell.build(
-          context,
-          navigator: item.shellNavigator = kNavigatorFactory(
-            delegate: widget.delegate,
-            stack: item.children,
-            navigatorKey: item.shellNavigatorKey
-              ??= GlobalKey(debugLabel: 'shell nested navigator ${widget.restorationScopeId}/$index'),
-            restorationScopeId: '${widget.restorationScopeId}/$index',
+        child: currentLocationFactory(
+          key: ValueKey(shell),
+          location: shell,
+          child: shell.build(
+            context,
+            navigator: item.shellNavigator = kNavigatorFactory(
+              delegate: widget.delegate,
+              stack: item.children,
+              navigatorKey: item.shellNavigatorKey
+                ??= GlobalKey(debugLabel: 'shell nested navigator ${widget.restorationScopeId}/$index'),
+              restorationScopeId: '${widget.restorationScopeId}/$index',
+            ),
           ),
         ),
       ),
@@ -422,40 +427,48 @@ class _KNavigatorState extends State<_KNavigator> {
         key: ValueKey(location),
         name: location.uri.toString(),
         restorationId: '$index#${location.discriminator.discriminator}',
-        child: location.build(
-          context,
-          children: [
-            for (final (childIndex, childItem) in item.children.items.indexed)
-              RestorationScope(
-                restorationId: '${widget.restorationScopeId}/$index/$childIndex',
-                // propagate focus changes to router
-                child: _GroupFocusListener(
-                  onFocus: () => item.children.selectChild(childIndex),
-                  child: Listener(
-                    onPointerDown: (event) => item.children.selectChild(childIndex),
-                    child: _StackListener(
-                      delegate: widget.delegate,
-                      stack: item.children,
-                      onChange: () {
-                        // trigger rebuild of shell when children changes
-                        item.reset();
-                        item.stack.triggerUpdate();
-                      },
-                      child: (childItem.location as ShellLocation<Object?>).build(
-                        context,
-                        navigator: childItem.shellNavigator = kNavigatorFactory(
-                          delegate: widget.delegate,
-                          stack: childItem.children,
-                          navigatorKey: childItem.shellNavigatorKey
-                            ??= GlobalKey(debugLabel: 'multi nested navigator ${widget.restorationScopeId}/$index/$childIndex'),
-                          restorationScopeId: '${widget.restorationScopeId}/$index/$childIndex',
+        child: currentLocationFactory(
+          key: ValueKey(location),
+          location: location,
+          child: location.build(
+            context,
+            children: [
+              for (final (childIndex, childItem) in item.children.items.indexed)
+                RestorationScope(
+                  restorationId: '${widget.restorationScopeId}/$index/$childIndex',
+                  // propagate focus changes to router
+                  child: _GroupFocusListener(
+                    onFocus: () => item.children.selectChild(childIndex),
+                    child: Listener(
+                      onPointerDown: (event) => item.children.selectChild(childIndex),
+                      child: _StackListener(
+                        delegate: widget.delegate,
+                        stack: item.children,
+                        onChange: () {
+                          // trigger rebuild of shell when children changes
+                          item.reset();
+                          item.stack.triggerUpdate();
+                        },
+                        child: currentLocationFactory(
+                          key: ValueKey(childItem.location),
+                          location: childItem.location,
+                          child: (childItem.location as ShellLocation<Object?>).build(
+                            context,
+                            navigator: childItem.shellNavigator = kNavigatorFactory(
+                              delegate: widget.delegate,
+                              stack: childItem.children,
+                              navigatorKey: childItem.shellNavigatorKey
+                                ??= GlobalKey(debugLabel: 'multi nested navigator ${widget.restorationScopeId}/$index/$childIndex'),
+                              restorationScopeId: '${widget.restorationScopeId}/$index/$childIndex',
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
       final location => location.buildPage(
@@ -463,7 +476,11 @@ class _KNavigatorState extends State<_KNavigator> {
         key: ValueKey(location),
         name: location.uri.toString(),
         restorationId: '$index#${location.discriminator.discriminator}',
-        child: location.build(context),
+        child: currentLocationFactory(
+          key: ValueKey(location),
+          location: location,
+          child: location.build(context),
+        ),
       ),
     };
 

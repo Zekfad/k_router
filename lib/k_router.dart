@@ -1,3 +1,4 @@
+export 'src/current_location.dart' hide currentLocationFactory;
 export 'src/deep_link_result.dart' show DeepLinkResult;
 export 'src/k_navigator.dart' hide kNavigatorFactory;
 export 'src/k_router_config.dart';
