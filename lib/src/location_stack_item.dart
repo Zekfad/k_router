@@ -16,7 +16,8 @@ final class LocationStackItem extends LinkedListEntry<LocationStackItem> {
   LocationStackItem({
     required this.location,
     LocationStack? children,
-  }) : children = children ?? LocationStack(), id = globalId++  {
+    int? id,
+  }) : children = children ?? LocationStack(), id = id ?? globalId++ {
     locationCache[location] = this;
     this.children.parentItem = this;
     assert(
@@ -62,6 +63,22 @@ final class LocationStackItem extends LinkedListEntry<LocationStackItem> {
   LocationStack get stack => list!.stack;
   int get index => stack.indexOf(this);
 
+  /// Attempts to remove this item from associated navigation [stack].
+  /// 
+  /// If this is the last route in [stack] parent item is removed.
+  /// This means that removing last item inside of shell location will remove
+  /// shell itself.
+  /// 
+  /// Also removing shell that is a direct child of multi location causes parent
+  /// (multi location) to be removed.
+  /// 
+  /// This is needed to prevent occurrence of empty multi or shell locations.
+  /// 
+  /// When ancestor item is removed instead of current [result] is passed to it
+  /// and current route is completed with `null`.
+  /// 
+  /// Since you cannot push initial location for multi or shell location this
+  /// makes sense.
   bool remove([ FutureOr<Object?>? result, ]) {
     assert(super.list != null, 'Item is not part of any stack');
     LocationStackItem? itemToRemove = this;

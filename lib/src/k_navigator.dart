@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
-import 'package:meta/meta.dart';
 
 import 'current_location.dart';
 import 'k_router_delegate.dart';
@@ -71,19 +70,47 @@ class KNavigator extends InheritedWidget {
   Stream<void> get changes => _kNavigatorKey.currentState!._changes;
 
   /// Pushes new location to this navigator.
-  @awaitNotRequired
-  Future<T?> pushLocation<T>(Location<T> location) =>
+  /// 
+  /// {@template k_router_location_push_result}
+  /// Returns opaque ID that can be used to resubscribe to route result after
+  /// state restoration and [Future] that completes with result.
+  /// 
+  /// Result of returned [Future] can be `null` even if location was popped with
+  /// another value in the following cases:
+  /// 
+  /// - Location was the last child of [ShellLocation] or [MultiLocation].
+  ///   In that case pop result will be forwarded to parent.
+  /// - Location was a [ShellLocation] that is a direct child of
+  ///  [MultiLocation]. In that case result will be forwarded to parent.
+  /// - Because removing [MultiLocation] also removes it's children, they will
+  ///   be resolved with `null`.
+  /// {@endtemplate}
+  (int, Future<T?>) pushLocation<T>(Location<T> location) =>
     _stack.pushLocation(location);
 
   /// Removes current location from this navigator and pushes new location
   /// in place of it.
-  @awaitNotRequired
-  Future<T?> replaceLocation<T>(Location<T> location) {
-    final future = _stack.pushLocation(location);
+  /// 
+  /// Removed location will be resolved with `null`.
+  /// For cases when you need to capture result that may came from replaced
+  /// location (e.g. replacing sign-in with sign-up) consider creating shell
+  /// and listening to it's result, since popping last shell item redirects pop
+  /// result to shell itself.
+  /// 
+  /// {@macro k_router_location_push_result}
+  (int, Future<T?>) replaceLocation<T>(Location<T> location) {
+    final result = _stack.pushLocation(location);
     final removed = _stack.activeItem!.previous!.remove();
     assert(removed, 'failed to remove previous item during replace');
-    return future;
+    return result;
   }
+
+  /// Try to get location result from previously retrieved opaque ID.
+  /// 
+  /// This method allows to resubscribe to location result after state
+  /// restoration.
+  Future<T?>? getLocationResult<T>(int locationId) =>
+    LocationStack.getLocationResult(locationId);
 
   /// Checks if navigator can pop current location.
   bool canPop() =>

@@ -44,18 +44,11 @@ Widget pageContentBuilder(BuildContext context, BaseLocation location) => Column
     ),
     Wrap(
       children: [
-        CupertinoButton(
-          child: const Text('Push book'),
-          onPressed: () async {
-            final result = await KNavigator.of(context).pushLocation(BookLocation(90));
-            print('Pushed book result: $result');
-          },
-        ),
+        const PushBookButton(),
         CupertinoButton(
           child: const Text('Replace book'),
-          onPressed: () async {
-            final result = await KNavigator.of(context).replaceLocation(BookLocation(120));
-            print('Replaced with book result: $result');
+          onPressed: () {
+            KNavigator.of(context).replaceLocation(BookLocation(120));
           },
         ),
         CupertinoButton(
@@ -66,14 +59,7 @@ Widget pageContentBuilder(BuildContext context, BaseLocation location) => Column
             );
           },
         ),
-        CupertinoButton(
-          child: const Text('Push shell'),
-          onPressed: () {
-            KNavigator.of(context).pushLocation(
-              SimpleShellLocation(uri: Uri.parse('/shell'), title: 'Shell'),
-            );
-          },
-        ),
+        const PushShellButton(),
         CupertinoButton(
           child: const Text('Push multi'),
           onPressed: () {
@@ -90,3 +76,97 @@ Widget pageContentBuilder(BuildContext context, BaseLocation location) => Column
     ),
   ],
 );
+
+
+class PushBookButton extends StatefulWidget {
+  const PushBookButton({super.key});
+
+  @override
+  State<PushBookButton> createState() => _PushBookButtonState();
+}
+
+class _PushBookButtonState extends State<PushBookButton> with RestorationMixin {
+  late RestorableLocationFuture<String> _bookLocation;
+
+  static final random = Random();
+
+  @override
+  String get restorationId => 'push_book';
+  
+  @override
+  void initState() {
+    super.initState();
+    _bookLocation = RestorableLocationFuture(
+      onPresent: (navigator, arguments) =>
+        navigator.pushLocation(BookLocation(arguments! as int)),
+      onComplete: (result) {
+        print('Book push result: $result');
+      },
+    );
+  }
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    registerForRestoration(_bookLocation, 'location');
+  }
+
+  @override
+  void dispose() {
+    _bookLocation.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+    CupertinoButton(
+      child: const Text('Push book'),
+      onPressed: () => _bookLocation.present(10 + random.nextInt(10)),
+    );
+}
+
+
+class PushShellButton extends StatefulWidget {
+  const PushShellButton({super.key});
+
+  @override
+  State<PushShellButton> createState() => _PushShellButtonState();
+}
+
+class _PushShellButtonState extends State<PushShellButton> with RestorationMixin {
+  late RestorableLocationFuture<Object?> _shellLocation;
+
+  static final random = Random();
+
+  @override
+  String get restorationId => 'push_shell';
+  
+  @override
+  void initState() {
+    super.initState();
+    _shellLocation = RestorableLocationFuture(
+      onPresent: (navigator, arguments) =>
+        navigator.pushLocation<Object?>(SimpleShellLocation(uri: Uri.parse('/shell'), title: arguments! as String)),
+      onComplete: (result) {
+        print('Shell push result: $result');
+      },
+    );
+  }
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    registerForRestoration(_shellLocation, 'location');
+  }
+
+  @override
+  void dispose() {
+    _shellLocation.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+    CupertinoButton(
+      child: const Text('Push shell'),
+      onPressed: () => _shellLocation.present('Shell ${random.nextInt(10)}'),
+    );
+}

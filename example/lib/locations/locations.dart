@@ -15,7 +15,7 @@ enum Locations with LocationDiscriminator {
   simple(LocationFunctionCodec(SimpleLocation.fromOptions)),
   simpleShell(LocationFunctionCodec(SimpleShellLocation.fromOptions)),
   simpleMulti(LocationFunctionCodec(SimpleMultiLocation.fromOptions)),
-  book(LocationFunctionCodec(BookLocation.fromOptions))
+  book(LocationFunctionCodec(BookLocation.fromOptions)),
   ;
 
   const Locations(this.codec);

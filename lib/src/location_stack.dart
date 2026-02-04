@@ -38,7 +38,7 @@ final class LocationStack extends ChangeNotifier {
     if (location case final LocationWithChildren<Object?> shell) {
       for (final child in shell.children) {
         item.children.pushLocation(child, false)
-          .catchError(popErrorHandler).ignore();
+          .$2.catchError(popErrorHandler).ignore();
       }
     }
     return LocationStack(
@@ -101,7 +101,7 @@ final class LocationStack extends ChangeNotifier {
     return null;
   }
 
-  Future<T?> pushLocation<T>(Location<T> location, [ bool notify = true, ]) {
+  (int, Future<T?>) pushLocation<T>(Location<T> location, [ bool notify = true, ]) {
     final newItem = LocationStackItem(
       location: location,
     );
@@ -111,7 +111,7 @@ final class LocationStack extends ChangeNotifier {
     if (location case final LocationWithChildren<Object?> shell) {
       for (final child in shell.children) {
         newItem.children.pushLocation(child, notify)
-          .catchError(popErrorHandler).ignore();
+          .$2.catchError(popErrorHandler).ignore();
       }
       if (location case final MultiLocation<Object?> multiLocation) {
         newItem.children.selectChild(multiLocation.activeIndex, notify);
@@ -121,14 +121,28 @@ final class LocationStack extends ChangeNotifier {
     if (notify) {
       notifyListeners();
     }
-    return newItem.popCompleter.future.then(
+    return (newItem.id, newItem.popCompleter.future.then(
       (value) => value is T? ? value : throw ArgumentError.value(
         value,
         'result',
         'Location popped with invalid type of value: '
         'expected $T or null, got: ${value.runtimeType}',
       ),
-    );
+    ));
+  }
+
+  static Future<T?>? getLocationResult<T>(int id) {
+    if (cachedItems[id] case final item?) {
+      return item.popCompleter.future.then(
+        (value) => value is T? ? value : throw ArgumentError.value(
+          value,
+          'result',
+          'Location popped with invalid type of value: '
+          'expected $T or null, got: ${value.runtimeType}',
+        ),
+      );
+    }
+    return null;
   }
 
   void _registerItem(LocationStackItem item) {

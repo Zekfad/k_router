@@ -38,10 +38,10 @@ class KRouteInformationProvider extends PlatformRouteInformationProvider {
                 delegate.currentConfiguration,
               DeepLinkPush(:final location) =>
                 delegate.currentConfiguration..leafActiveItem.stack.pushLocation(location)
-                  .catchError(LocationStack.popErrorHandler).ignore(),
+                  .$2.catchError(LocationStack.popErrorHandler).ignore(),
               DeepLinkPushToRoot(:final location) =>
                 delegate.currentConfiguration..pushLocation(location)
-                  .catchError(LocationStack.popErrorHandler).ignore(),
+                  .$2.catchError(LocationStack.popErrorHandler).ignore(),
               DeepLinkReplaceStack(:final location) =>
                 LocationStack.initial(location),
             },

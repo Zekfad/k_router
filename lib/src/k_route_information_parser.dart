@@ -138,6 +138,7 @@ class KRouteInformationParser extends RouteInformationParser<LocationStack> {
               ..parentItem = cached;
           }
           final item = cached ?? LocationStackItem(
+            id: id,
             location: (
               locationCodecs[discriminator] ??
               locationCodecs[InternalLocations.unknown.discriminator] ??
