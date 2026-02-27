@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 
 import 'k_navigator.dart';
 import 'location.dart';
+import 'location_error_widget_builder.dart';
 import 'location_stack.dart';
 
 
@@ -18,6 +19,7 @@ class KRouterDelegate extends RouterDelegate<LocationStack> with ChangeNotifier,
   KRouterDelegate({
     required Location<Object?> initialLocation,
     this.onDidInitialize,
+    this.errorBuilder,
   }) : currentConfiguration = LocationStack.initial(initialLocation) {
     if (kFlutterMemoryAllocationsEnabled) {
       ChangeNotifier.maybeDispatchObjectCreation(this);
@@ -29,6 +31,8 @@ class KRouterDelegate extends RouterDelegate<LocationStack> with ChangeNotifier,
 
   /// Callback that is executed next frame after router is initialized.
   final OnDidInitialize? onDidInitialize;
+  /// Builder for replacement widget if location page builder failed.
+  final LocationErrorWidgetBuilder? errorBuilder;
 
   @override
   LocationStack currentConfiguration;
@@ -76,6 +80,7 @@ class KRouterDelegate extends RouterDelegate<LocationStack> with ChangeNotifier,
     restorationScopeId: 'router_root',
     navigatorKey: navigatorKey,
     createHeroController: false,
+    errorBuilder: errorBuilder,
   );
 
   @override

@@ -6,6 +6,7 @@ import 'k_route_information_provider.dart';
 import 'k_router_delegate.dart';
 import 'location.dart';
 import 'location_codec.dart';
+import 'location_error_widget_builder.dart';
 import 'location_stack.dart';
 
 
@@ -34,15 +35,20 @@ class KRouterConfig extends RouterConfig<LocationStack> {
   /// 
   /// [onDidInitialize] is a callback that allows you to run logic after router
   /// initialization and tells you whether app was restored or cold started.
+  /// 
+  /// [errorBuilder] is a builder for a replacement widget in case location's
+  /// page is built with an error.
   factory KRouterConfig({
     required Location<Object?> initialLocation,
     required LocationCodecMap locationCodecs,
     DeepLinkHandler? onDeepLink,
     OnDidInitialize? onDidInitialize,
+    LocationErrorWidgetBuilder? errorBuilder,
   }) {
     final delegate = KRouterDelegate(
       initialLocation: initialLocation,
       onDidInitialize: onDidInitialize,
+      errorBuilder: errorBuilder,
     );
     final parser = KRouteInformationParser(
       locationCodecs: locationCodecs,

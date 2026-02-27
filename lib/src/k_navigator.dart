@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show MaterialPage;
 import 'package:flutter/widgets.dart';
 
 import 'current_location.dart';
 import 'k_router_delegate.dart';
 import 'location.dart';
+import 'location_error_widget_builder.dart';
 import 'location_pop_type.dart';
 import 'location_stack.dart';
 import 'location_stack_item.dart';
@@ -23,6 +25,7 @@ class KNavigator extends InheritedWidget {
     required LocationStack stack,
     required this.navigatorKey,
     required String restorationScopeId,
+    required LocationErrorWidgetBuilder? errorBuilder,
     required GlobalKey<_KNavigatorState> kNavigatorKey,
     bool createHeroController = true,
   }) :
@@ -37,6 +40,7 @@ class KNavigator extends InheritedWidget {
         stack: stack,
         navigatorKey: navigatorKey,
         restorationScopeId: restorationScopeId,
+        errorBuilder: errorBuilder,
         createHeroController: createHeroController,
       ),
     );
@@ -47,6 +51,7 @@ class KNavigator extends InheritedWidget {
     required LocationStack stack,
     required GlobalKey<NavigatorState> navigatorKey,
     required String restorationScopeId,
+    required LocationErrorWidgetBuilder? errorBuilder,
     bool createHeroController = true,
   }) => KNavigator._new(
     delegate: delegate,
@@ -54,7 +59,8 @@ class KNavigator extends InheritedWidget {
     navigatorKey: navigatorKey,
     restorationScopeId: restorationScopeId,
     createHeroController: createHeroController,
-    kNavigatorKey: GlobalKey(debugLabel: '_kNavigator#$restorationScopeId'),
+    errorBuilder: errorBuilder,
+    kNavigatorKey: GlobalKey(debugLabel: '_kNavigator#$restorationScopeId')
   );
 
   final GlobalKey<_KNavigatorState> _kNavigatorKey;
@@ -358,6 +364,7 @@ class _KNavigator extends StatefulWidget {
     required this.stack,
     required this.navigatorKey,
     required this.restorationScopeId,
+    required this.errorBuilder,
     required this.createHeroController,
     super.key,
   });
@@ -366,6 +373,7 @@ class _KNavigator extends StatefulWidget {
   final LocationStack stack;
   final GlobalKey<NavigatorState> navigatorKey;
   final String restorationScopeId;
+  final LocationErrorWidgetBuilder? errorBuilder;
   final bool createHeroController;
 
   @override
@@ -379,6 +387,7 @@ class _KNavigator extends StatefulWidget {
       ..add(DiagnosticsProperty('navigatorKey', navigatorKey))
       ..add(DiagnosticsProperty('delegate', delegate))
       ..add(DiagnosticsProperty('stack', stack))
+      ..add(DiagnosticsProperty('errorBuilder', errorBuilder))
       ..add(FlagProperty('createHeroController', value: createHeroController, ifTrue: 'create', ifFalse: 'inherit'));
   }
 }
@@ -454,89 +463,103 @@ class _KNavigatorState extends State<_KNavigator> {
     }
   }
 
-  Page<Object?> _buildPage(BuildContext context, int index, LocationStackItem item) =>
-    item.page ??= switch (item.location) {
-      final ShellLocation<Object?> shell => shell.buildPage(
-        context,
-        key: ValueKey(shell),
-        name: shell.uri.toString(),
-        restorationId: '$index#${shell.discriminator.discriminator}',
-        child: currentLocationFactory(
+  Page<Object?> _buildPage(BuildContext context, int index, LocationStackItem item) {
+    try {
+      return item.page ??= switch (item.location) {
+        final ShellLocation<Object?> shell => shell.buildPage(
+          context,
           key: ValueKey(shell),
-          location: shell,
-          child: shell.build(
-            context,
-            navigator: item.shellNavigator = kNavigatorFactory(
-              delegate: widget.delegate,
-              stack: item.children,
-              navigatorKey: item.shellNavigatorKey
-                ??= GlobalKey(debugLabel: 'shell nested navigator ${widget.restorationScopeId}/$index'),
-              restorationScopeId: '${widget.restorationScopeId}/$index',
+          name: shell.uri.toString(),
+          restorationId: '$index#${shell.discriminator.discriminator}',
+          child: currentLocationFactory(
+            key: ValueKey(shell),
+            location: shell,
+            child: shell.build(
+              context,
+              navigator: item.shellNavigator = kNavigatorFactory(
+                delegate: widget.delegate,
+                stack: item.children,
+                navigatorKey: item.shellNavigatorKey
+                  ??= GlobalKey(debugLabel: 'shell nested navigator ${widget.restorationScopeId}/$index'),
+                restorationScopeId: '${widget.restorationScopeId}/$index',
+                errorBuilder: widget.errorBuilder,
+              ),
             ),
           ),
         ),
-      ),
-      final MultiLocation<Object?> location => location.buildPage(
-        context,
-        key: ValueKey(location),
-        name: location.uri.toString(),
-        restorationId: '$index#${location.discriminator.discriminator}',
-        child: currentLocationFactory(
+        final MultiLocation<Object?> location => location.buildPage(
+          context,
           key: ValueKey(location),
-          location: location,
-          child: location.build(
-            context,
-            children: [
-              for (final (childIndex, childItem) in item.children.items.indexed)
-                RestorationScope(
-                  restorationId: '${widget.restorationScopeId}/$index/$childIndex',
-                  // propagate focus changes to router
-                  child: _GroupFocusListener(
-                    onFocus: () => item.children.selectChild(childIndex),
-                    child: Listener(
-                      onPointerDown: (event) => item.children.selectChild(childIndex),
-                      child: _StackListener(
-                        delegate: widget.delegate,
-                        stack: item.children,
-                        onChange: () {
-                          // trigger rebuild of shell when children changes
-                          item.reset();
-                          item.stack.triggerUpdate();
-                        },
-                        child: currentLocationFactory(
-                          key: ValueKey(childItem.location),
-                          location: childItem.location,
-                          child: (childItem.location as ShellLocation<Object?>).build(
-                            context,
-                            navigator: childItem.shellNavigator = kNavigatorFactory(
-                              delegate: widget.delegate,
-                              stack: childItem.children,
-                              navigatorKey: childItem.shellNavigatorKey
-                                ??= GlobalKey(debugLabel: 'multi nested navigator ${widget.restorationScopeId}/$index/$childIndex'),
-                              restorationScopeId: '${widget.restorationScopeId}/$index/$childIndex',
+          name: location.uri.toString(),
+          restorationId: '$index#${location.discriminator.discriminator}',
+          child: currentLocationFactory(
+            key: ValueKey(location),
+            location: location,
+            child: location.build(
+              context,
+              children: [
+                for (final (childIndex, childItem) in item.children.items.indexed)
+                  RestorationScope(
+                    restorationId: '${widget.restorationScopeId}/$index/$childIndex',
+                    // propagate focus changes to router
+                    child: _GroupFocusListener(
+                      onFocus: () => item.children.selectChild(childIndex),
+                      child: Listener(
+                        onPointerDown: (event) => item.children.selectChild(childIndex),
+                        child: _StackListener(
+                          delegate: widget.delegate,
+                          stack: item.children,
+                          onChange: () {
+                            // trigger rebuild of shell when children changes
+                            item.reset();
+                            item.stack.triggerUpdate();
+                          },
+                          child: currentLocationFactory(
+                            key: ValueKey(childItem.location),
+                            location: childItem.location,
+                            child: (childItem.location as ShellLocation<Object?>).build(
+                              context,
+                              navigator: childItem.shellNavigator = kNavigatorFactory(
+                                delegate: widget.delegate,
+                                stack: childItem.children,
+                                navigatorKey: childItem.shellNavigatorKey
+                                  ??= GlobalKey(debugLabel: 'multi nested navigator ${widget.restorationScopeId}/$index/$childIndex'),
+                                restorationScopeId: '${widget.restorationScopeId}/$index/$childIndex',
+                                errorBuilder: widget.errorBuilder,
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
-      final location => location.buildPage(
-        context,
-        key: ValueKey(location),
-        name: location.uri.toString(),
-        restorationId: '$index#${location.discriminator.discriminator}',
-        child: currentLocationFactory(
+        final location => location.buildPage(
+          context,
           key: ValueKey(location),
-          location: location,
-          child: location.build(context),
+          name: location.uri.toString(),
+          restorationId: '$index#${location.discriminator.discriminator}',
+          child: currentLocationFactory(
+            key: ValueKey(location),
+            location: location,
+            child: location.build(context),
+          ),
         ),
-      ),
-    };
+      };
+    } catch (error, stackTrace) {
+      return MaterialPage(
+        key: ValueKey(item.location),
+        name: item.location.uri.toString(),
+        restorationId: '$index#${item.location.discriminator.discriminator}',
+        maintainState: false,
+        child: widget.errorBuilder?.call(context, error, stackTrace)
+          ?? ErrorWidget(error),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
