@@ -22,12 +22,15 @@ class CurrentLocation extends InheritedWidget {
   final Location<Object?> location;
 
   /// Try to retrieve [Location] in which this [context] is contained.
-  static Location<Object?>? maybeOf(BuildContext context) =>
-    context.dependOnInheritedWidgetOfExactType<CurrentLocation>()?.location;
+  static Location<Object?>? maybeOf(BuildContext context, { bool listen = true, }) => listen
+    ? context.dependOnInheritedWidgetOfExactType<CurrentLocation>()?.location
+    : context.getInheritedWidgetOfExactType<CurrentLocation>()?.location;
 
   /// Retrieve [Location] in which this [context] is contained.
-  static Location<Object?> of(BuildContext context) {
-    final result = maybeOf(context);
+  /// 
+  /// {@macro k_router_di_listen_param}
+  static Location<Object?> of(BuildContext context, { bool listen = true, }) {
+    final result = maybeOf(context, listen: listen);
     assert(result != null, 'No CurrentLocation found in context');
     return result!;
   }

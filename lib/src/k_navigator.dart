@@ -257,8 +257,14 @@ class KNavigator extends InheritedWidget {
   }
 
   /// Checks whether [context] is part of leaf active location of root navigator.
-  static bool isContextActive(BuildContext context) =>
-    of(context)._delegate.currentConfiguration.leafActiveItem.location == CurrentLocation.of(context);
+  /// 
+  /// {@template k_router_di_listen_param}
+  /// If [listen] is `false` this call doesn't add change dependencies of
+  /// [context].
+  /// {@endtemplate}
+  static bool isContextActive(BuildContext context, { bool listen = true, }) =>
+    of(context, listen: listen)._delegate.currentConfiguration.leafActiveItem
+      .location == CurrentLocation.of(context, listen: listen);
 
   /// Try to get [BuildContext] of shell inside of [location].
   static BuildContext? getContextOfShell(ShellLocation<Object?> location) {
@@ -283,8 +289,11 @@ class KNavigator extends InheritedWidget {
   }
 
   /// Try to get [KNavigator] from this [context].
-  static KNavigator? maybeOf(BuildContext context) =>
-    context.dependOnInheritedWidgetOfExactType<KNavigator>();
+  /// 
+  /// {@macro k_router_di_listen_param}
+  static KNavigator? maybeOf(BuildContext context, { bool listen = true, }) => listen
+    ? context.dependOnInheritedWidgetOfExactType<KNavigator>()
+    : context.getInheritedWidgetOfExactType<KNavigator>();
 
   /// Try to get [KNavigator] from context of shell inside of [location].
   static KNavigator? maybeOfShell(ShellLocation<Object?> location) {
@@ -315,8 +324,10 @@ class KNavigator extends InheritedWidget {
   }
 
   /// Require [KNavigator] from this [context].
-  static KNavigator of(BuildContext context) {
-    final result = maybeOf(context);
+  /// 
+  /// {@macro k_router_di_listen_param}
+  static KNavigator of(BuildContext context, { bool listen = true, }) {
+    final result = maybeOf(context, listen: listen);
     assert(result != null, 'No KNavigator found in context');
     return result!;
   }
