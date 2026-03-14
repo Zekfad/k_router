@@ -70,16 +70,24 @@ class KRouterDelegate extends RouterDelegate<LocationStack> with ChangeNotifier,
   }
 
   @override
-  Future<bool> popRoute() =>
-    SynchronousFuture(currentConfiguration.leafActiveItem.remove());
+  Future<bool> popRoute() {
+    final leaf = currentConfiguration.leafActiveItem;
+    final target = leaf.removeTarget;
+    if (target == null) {
+      // cannot remove last page, so we let root navigator decide
+      return navigatorKey.currentState!.maybePop();
+    }
+    final navigatorState = (target.stack.navigatorKey ?? target.stack.parentItem?.shellNavigatorKey)!.currentState!;
+    return navigatorState.maybePop();
+  }
 
   @override
   Widget build(BuildContext context) => kNavigatorFactory(
+    root: true,
     delegate: this,
     stack: currentConfiguration,
     restorationScopeId: 'router_root',
     navigatorKey: navigatorKey,
-    createHeroController: false,
     errorBuilder: errorBuilder,
   );
 

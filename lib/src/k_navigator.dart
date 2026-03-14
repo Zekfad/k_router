@@ -27,7 +27,7 @@ class KNavigator extends InheritedWidget {
     required String restorationScopeId,
     required LocationErrorWidgetBuilder? errorBuilder,
     required GlobalKey<_KNavigatorState> kNavigatorKey,
-    bool createHeroController = true,
+    bool root = false,
   }) :
     _delegate = delegate,
     _stack = stack,
@@ -41,7 +41,7 @@ class KNavigator extends InheritedWidget {
         navigatorKey: navigatorKey,
         restorationScopeId: restorationScopeId,
         errorBuilder: errorBuilder,
-        createHeroController: createHeroController,
+        root: root,
       ),
     );
 
@@ -52,13 +52,13 @@ class KNavigator extends InheritedWidget {
     required GlobalKey<NavigatorState> navigatorKey,
     required String restorationScopeId,
     required LocationErrorWidgetBuilder? errorBuilder,
-    bool createHeroController = true,
+    bool root = false,
   }) => KNavigator._new(
     delegate: delegate,
     stack: stack,
     navigatorKey: navigatorKey,
     restorationScopeId: restorationScopeId,
-    createHeroController: createHeroController,
+    root: root,
     errorBuilder: errorBuilder,
     kNavigatorKey: GlobalKey(debugLabel: '_kNavigator#$restorationScopeId')
   );
@@ -365,7 +365,7 @@ class _KNavigator extends StatefulWidget {
     required this.navigatorKey,
     required this.restorationScopeId,
     required this.errorBuilder,
-    required this.createHeroController,
+    required this.root,
     super.key,
   });
 
@@ -374,7 +374,7 @@ class _KNavigator extends StatefulWidget {
   final GlobalKey<NavigatorState> navigatorKey;
   final String restorationScopeId;
   final LocationErrorWidgetBuilder? errorBuilder;
-  final bool createHeroController;
+  final bool root;
 
   @override
   State<_KNavigator> createState() => _KNavigatorState();
@@ -388,7 +388,7 @@ class _KNavigator extends StatefulWidget {
       ..add(DiagnosticsProperty('delegate', delegate))
       ..add(DiagnosticsProperty('stack', stack))
       ..add(DiagnosticsProperty('errorBuilder', errorBuilder))
-      ..add(FlagProperty('createHeroController', value: createHeroController, ifTrue: 'create', ifFalse: 'inherit'));
+      ..add(FlagProperty('root', value: root, ifTrue: 'root', ifFalse: 'nested'));
   }
 }
 
@@ -405,36 +405,41 @@ class _KNavigatorState extends State<_KNavigator> {
 
   @override
   void initState() {
-    if (widget.createHeroController) {
+    super.initState();
+    if (!widget.root) {
       _heroController = HeroController();
     }
-    super.initState();
+    widget.stack.navigatorKey = widget.navigatorKey;
   }
 
   @override
   void didUpdateWidget(covariant _KNavigator oldWidget) {
-    if (oldWidget.createHeroController && !widget.createHeroController) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.root && widget.root) {
       _heroController!.dispose();
     }
-    if (!oldWidget.createHeroController && widget.createHeroController) {
+    if (oldWidget.root && !widget.root) {
       _heroController = HeroController();
     }
-    super.didUpdateWidget(oldWidget);
+    if (oldWidget.navigatorKey != widget.navigatorKey) {
+      widget.stack.navigatorKey = widget.navigatorKey;
+    }
   }
 
   @override
   void reassemble() {
+    super.reassemble();
     // trigger rebuild for all pages during hot reload
     for (final item in widget.stack.items) {
       item.reset();
     }
     widget.stack.triggerUpdate();
-    super.reassemble();
   }
 
   @override
   void dispose() {
     _heroController?.dispose();
+    widget.stack.navigatorKey = null;
     _observers.clear();
     _changesController.close().ignore();
     super.dispose();
@@ -595,13 +600,22 @@ class _KNavigatorState extends State<_KNavigator> {
               _buildPage(context, index, item)
           ];
         }
-        return Navigator(
+        final navigator = Navigator(
           key: widget.navigatorKey,
           restorationScopeId: widget.restorationScopeId,
           pages: pages,
           onDidRemovePage: _onDidRemovePage,
           observers: _observers,
         );
+        // if (!widget.root) {
+        //   final parent = widget.stack.parentItem!;
+        //   return NavigatorPopHandler<Object?>(
+        //     enabled: parent == parent.stack.activeItem!,
+        //     onPopWithResult: (result) => widget.navigatorKey.currentState!.maybePop(result),
+        //     child: navigator,
+        //   );
+        // }
+        return navigator;
       },
     );
     if (_heroController case final controller?) {

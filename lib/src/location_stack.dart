@@ -63,6 +63,7 @@ final class LocationStack extends ChangeNotifier {
   final LocationStackItemsList items;
   LocationStackItem? activeItem;
   LocationStackItem? parentItem;
+  GlobalKey<NavigatorState>? navigatorKey;
 
   LocationStack get leafActiveStack {
     var parentStack = this;

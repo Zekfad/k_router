@@ -62,24 +62,41 @@ final class LocationStackItem extends LinkedListEntry<LocationStackItem> {
 
   LocationStack get stack => list!.stack;
   int get index => stack.indexOf(this);
+  // Stack has no navigator key if and only if it's part of shell that's inside
+  // of multi location.
+  GlobalKey<NavigatorState>? get outerNavigatorKey =>
+    stack.navigatorKey ?? stack.parentItem?.shellNavigatorKey;
 
   /// Attempts to remove this item from associated navigation [stack].
-  /// 
-  /// If this is the last route in [stack] parent item is removed.
+  ///
+  /// If this is the last route in [stack] - parent item is removed.
   /// This means that removing last item inside of shell location will remove
   /// shell itself.
-  /// 
+  ///
   /// Also removing shell that is a direct child of multi location causes parent
   /// (multi location) to be removed.
-  /// 
+  ///
   /// This is needed to prevent occurrence of empty multi or shell locations.
-  /// 
-  /// When ancestor item is removed instead of current [result] is passed to it
-  /// and current route is completed with `null`.
-  /// 
+  ///
+  /// When ancestor item is removed instead, [result] is passed to it and
+  /// current route is completed with `null`.
+  ///
   /// Since you cannot push initial location for multi or shell location this
   /// makes sense.
   bool remove([ FutureOr<Object?>? result, ]) {
+    if (removeTarget case final itemToRemove?) {
+      itemToRemove.stack.didRemoveItem(
+        itemToRemove,
+        notify: true,
+        result: result,
+      );
+      return true;
+    }
+    return false;
+  }
+
+  /// Returns target for [remove].
+  LocationStackItem? get removeTarget {
     assert(super.list != null, 'Item is not part of any stack');
     LocationStackItem? itemToRemove = this;
     while (
@@ -95,14 +112,9 @@ final class LocationStackItem extends LinkedListEntry<LocationStackItem> {
     }
     // assert(itemToRemove != null, 'cannot pop the last page of router');
     if (itemToRemove == null) {
-      return false;
+      return null;
     }
-    itemToRemove.stack.didRemoveItem(
-      itemToRemove,
-      notify: true,
-      result: result,
-    );
-    return true;
+    return itemToRemove;
   }
 
   void reset() {
