@@ -62,10 +62,21 @@ final class LocationStackItem extends LinkedListEntry<LocationStackItem> {
 
   LocationStack get stack => list!.stack;
   int get index => stack.indexOf(this);
-  // Stack has no navigator key if and only if it's part of shell that's inside
-  // of multi location.
-  GlobalKey<NavigatorState>? get outerNavigatorKey =>
-    stack.navigatorKey ?? stack.parentItem?.shellNavigatorKey;
+
+  /// Key of navigator that manages [stack] of this item.
+  ///
+  /// Stack has no navigator key if and only if it's part of shell that's inside
+  /// of multi location in such case parent navigator is returned.
+  GlobalKey<NavigatorState> get outerNavigatorKey {
+    assert(
+      stack.navigatorKey != null || (
+        location is ShellLocation &&
+        stack.parentItem?.location is MultiLocation
+      ),
+      'navigator key is not set for stack item\'s parent',
+    );
+    return stack.navigatorKey ?? stack.parentItem!.stack.navigatorKey!;
+  }
 
   /// Attempts to remove this item from associated navigation [stack].
   ///

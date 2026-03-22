@@ -26,16 +26,14 @@ class KNavigator extends InheritedWidget {
     required this.navigatorKey,
     required String restorationScopeId,
     required LocationErrorWidgetBuilder? errorBuilder,
-    required GlobalKey<_KNavigatorState> kNavigatorKey,
     bool root = false,
   }) :
     _delegate = delegate,
     _stack = stack,
     _restorationScopeId = restorationScopeId,
-    _kNavigatorKey = kNavigatorKey,
     super(
       child: _KNavigator(
-        key: kNavigatorKey,
+        key: ValueKey(stack),
         delegate: delegate,
         stack: stack,
         navigatorKey: navigatorKey,
@@ -60,10 +58,8 @@ class KNavigator extends InheritedWidget {
     restorationScopeId: restorationScopeId,
     root: root,
     errorBuilder: errorBuilder,
-    kNavigatorKey: GlobalKey(debugLabel: '_kNavigator#$restorationScopeId')
   );
 
-  final GlobalKey<_KNavigatorState> _kNavigatorKey;
   /// Raw navigator key.
   ///
   /// If router is used correctly you dont need it.
@@ -73,17 +69,18 @@ class KNavigator extends InheritedWidget {
   final String _restorationScopeId;
 
   /// Emits null values when managed location stack changes.
-  Stream<void> get changes => _kNavigatorKey.currentState!._changes;
+  Stream<void> get changes => navigatorKey.currentContext!
+    .findAncestorStateOfType<_KNavigatorState>()!._changes;
 
   /// Pushes new location to this navigator.
-  /// 
+  ///
   /// {@template k_router_location_push_result}
   /// Returns opaque ID that can be used to resubscribe to route result after
   /// state restoration and [Future] that completes with result.
-  /// 
+  ///
   /// Result of returned [Future] can be `null` even if location was popped with
   /// another value in the following cases:
-  /// 
+  ///
   /// - Location was the last child of [ShellLocation] or [MultiLocation].
   ///   In that case pop result will be forwarded to parent.
   /// - Location was a [ShellLocation] that is a direct child of
@@ -96,13 +93,13 @@ class KNavigator extends InheritedWidget {
 
   /// Removes current location from this navigator and pushes new location
   /// in place of it.
-  /// 
+  ///
   /// Removed location will be resolved with `null`.
   /// For cases when you need to capture result that may came from replaced
   /// location (e.g. replacing sign-in with sign-up) consider creating shell
   /// and listening to it's result, since popping last shell item redirects pop
   /// result to shell itself.
-  /// 
+  ///
   /// {@macro k_router_location_push_result}
   (int, Future<T?>) replaceLocation<T>(Location<T> location) {
     final result = _stack.pushLocation(location);
@@ -112,7 +109,7 @@ class KNavigator extends InheritedWidget {
   }
 
   /// Try to get location result from previously retrieved opaque ID.
-  /// 
+  ///
   /// This method allows to resubscribe to location result after state
   /// restoration.
   Future<T?>? getLocationResult<T>(int locationId) =>
@@ -263,7 +260,7 @@ class KNavigator extends InheritedWidget {
   }
 
   /// Checks whether [context] is part of leaf active location of root navigator.
-  /// 
+  ///
   /// {@template k_router_di_listen_param}
   /// If [listen] is `false` this call doesn't add change dependencies of
   /// [context].
@@ -295,7 +292,7 @@ class KNavigator extends InheritedWidget {
   }
 
   /// Try to get [KNavigator] from this [context].
-  /// 
+  ///
   /// {@macro k_router_di_listen_param}
   static KNavigator? maybeOf(BuildContext context, { bool listen = true, }) => listen
     ? context.dependOnInheritedWidgetOfExactType<KNavigator>()
@@ -330,7 +327,7 @@ class KNavigator extends InheritedWidget {
   }
 
   /// Require [KNavigator] from this [context].
-  /// 
+  ///
   /// {@macro k_router_di_listen_param}
   static KNavigator of(BuildContext context, { bool listen = true, }) {
     final result = maybeOf(context, listen: listen);

@@ -77,7 +77,7 @@ class KRouterDelegate extends RouterDelegate<LocationStack> with ChangeNotifier,
       // cannot remove last page, so we let root navigator decide
       return navigatorKey.currentState!.maybePop();
     }
-    final navigatorState = (target.stack.navigatorKey ?? target.stack.parentItem?.shellNavigatorKey)!.currentState!;
+    final navigatorState = target.outerNavigatorKey.currentState!;
     return navigatorState.maybePop();
   }
 
