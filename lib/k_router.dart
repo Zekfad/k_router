@@ -7,4 +7,5 @@ export 'src/location_base.dart';
 export 'src/location_codec.dart';
 export 'src/location_discriminator.dart';
 export 'src/location_function_codec.dart';
+export 'src/location_stack_change_notification.dart';
 export 'src/restorable_location_future.dart';

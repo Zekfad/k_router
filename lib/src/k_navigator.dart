@@ -11,6 +11,7 @@ import 'location.dart';
 import 'location_error_widget_builder.dart';
 import 'location_pop_type.dart';
 import 'location_stack.dart';
+import 'location_stack_change_notification.dart';
 import 'location_stack_item.dart';
 
 
@@ -26,6 +27,7 @@ class KNavigator extends InheritedWidget {
     required this.navigatorKey,
     required String restorationScopeId,
     required LocationErrorWidgetBuilder? errorBuilder,
+    super.key,
     bool root = false,
   }) :
     _delegate = delegate,
@@ -50,8 +52,10 @@ class KNavigator extends InheritedWidget {
     required GlobalKey<NavigatorState> navigatorKey,
     required String restorationScopeId,
     required LocationErrorWidgetBuilder? errorBuilder,
+    Key? key,
     bool root = false,
   }) => KNavigator._new(
+    key: key,
     delegate: delegate,
     stack: stack,
     navigatorKey: navigatorKey,
@@ -62,15 +66,12 @@ class KNavigator extends InheritedWidget {
 
   /// Raw navigator key.
   ///
-  /// If router is used correctly you dont need it.
+  /// Should only be used to compare notification levels via
+  /// [LocationStackChangeNotification.navigatorKey].
   final GlobalKey<NavigatorState> navigatorKey;
   final KRouterDelegate _delegate;
   final LocationStack _stack;
   final String _restorationScopeId;
-
-  /// Emits null values when managed location stack changes.
-  Stream<void> get changes => navigatorKey.currentContext!
-    .findAncestorStateOfType<_KNavigatorState>()!._changes;
 
   /// Pushes new location to this navigator.
   ///
@@ -182,8 +183,14 @@ class KNavigator extends InheritedWidget {
   /// This getter is relatively expensive (required full linked list iteration)
   /// and returns snapshot of current stack.
   /// You're free to modify returned list, it wont affect routing.
+  ///
+  /// If you only need to check for length use [locationsStackLength] which
+  /// doesn't need to iterate linked list.
   List<Location<Object?>> get locationsStack =>
     _stack.items.map((e) => e.location).toList();
+
+  /// Retrieves length of current locations stack of this navigator.
+  int get locationsStackLength => _stack.items.length;
 
   /// The first [Location] in stack satisfying [test], or `null` if there are
   /// none.
@@ -349,7 +356,7 @@ class KNavigator extends InheritedWidget {
       ..add(DiagnosticsProperty('activeLocation', activeLocation))
       ..add(DiagnosticsProperty('leafActiveLocation', leafActiveLocation))
       ..add(IterableProperty('locationsStack', locationsStack))
-      ..add(DiagnosticsProperty('changes', changes))
+      ..add(IntProperty('locationsStackLength', locationsStackLength))
       ..add(DiagnosticsProperty('_stack', _stack))
       ..add(StringProperty('_restorationScopeId', _restorationScopeId));
   }
@@ -397,9 +404,6 @@ class _KNavigatorState extends State<_KNavigator> {
   ];
   HeroController? _heroController;
 
-  late final _changesController = StreamController<void>.broadcast();
-  Stream<void> get _changes => _changesController.stream;
-
   @override
   void initState() {
     super.initState();
@@ -438,7 +442,6 @@ class _KNavigatorState extends State<_KNavigator> {
     _heroController?.dispose();
     widget.stack.navigatorKey = null;
     _observers.clear();
-    _changesController.close().ignore();
     super.dispose();
   }
 
@@ -478,7 +481,8 @@ class _KNavigatorState extends State<_KNavigator> {
             location: shell,
             child: shell.build(
               context,
-              navigator: item.shellNavigator = kNavigatorFactory(
+              navigator: item.shellNavigator ??= kNavigatorFactory(
+                key: ValueKey(shell),
                 delegate: widget.delegate,
                 stack: item.children,
                 navigatorKey: item.shellNavigatorKey
@@ -521,7 +525,8 @@ class _KNavigatorState extends State<_KNavigator> {
                             location: childItem.location,
                             child: (childItem.location as ShellLocation<Object?>).build(
                               context,
-                              navigator: childItem.shellNavigator = kNavigatorFactory(
+                              navigator: childItem.shellNavigator ??= kNavigatorFactory(
+                                key: ValueKey(childItem.location),
                                 delegate: widget.delegate,
                                 stack: childItem.children,
                                 navigatorKey: childItem.shellNavigatorKey
@@ -569,9 +574,9 @@ class _KNavigatorState extends State<_KNavigator> {
       delegate: widget.delegate,
       stack: widget.stack,
       onChange: () {
-        if (_changesController.hasListener) {
-          _changesController.add(null);
-        }
+        LocationStackChangeNotification(
+          navigatorKey: widget.navigatorKey,
+        ).dispatch(context);
       },
       builder: (context) {
         if (widget.stack.items.isEmpty) {
