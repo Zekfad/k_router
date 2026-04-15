@@ -481,7 +481,7 @@ class _KNavigatorState extends State<_KNavigator> {
             location: shell,
             child: shell.build(
               context,
-              navigator: item.shellNavigator ??= kNavigatorFactory(
+              navigator: item.shellNavigator = kNavigatorFactory(
                 key: ValueKey(shell),
                 delegate: widget.delegate,
                 stack: item.children,
@@ -525,7 +525,7 @@ class _KNavigatorState extends State<_KNavigator> {
                             location: childItem.location,
                             child: (childItem.location as ShellLocation<Object?>).build(
                               context,
-                              navigator: childItem.shellNavigator ??= kNavigatorFactory(
+                              navigator: childItem.shellNavigator = kNavigatorFactory(
                                 key: ValueKey(childItem.location),
                                 delegate: widget.delegate,
                                 stack: childItem.children,
