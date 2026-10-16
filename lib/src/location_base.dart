@@ -2,9 +2,10 @@
 library;
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' show MaterialPage;
 import 'package:flutter/widgets.dart';
+import 'package:material_ui/material_ui.dart' show MaterialPage;
 
+import 'experimental/k_material_page.dart';
 import 'location.dart';
 import 'location_codec.dart';
 import 'location_pop_type.dart';
@@ -71,7 +72,8 @@ abstract base class BaseLocation<T> with ChangeNotifier, LocationPopType<T> impl
     required String name,
     required String restorationId,
     required Widget child,
-  }) => MaterialPage(
+  }) => KMaterialPage(
+    location: this,
     key: key,
     name: name,
     restorationId: restorationId,
@@ -127,7 +129,8 @@ abstract base class BaseMultiLocation<T> extends BaseLocation<T> implements Mult
     required String name,
     required String restorationId,
     required Widget child,
-  }) => MaterialPage(
+  }) => KMaterialPage(
+    location: this,
     key: key,
     name: name,
     restorationId: restorationId,

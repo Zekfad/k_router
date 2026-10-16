@@ -208,9 +208,9 @@ final class LocationStack extends ChangeNotifier {
   }
 
   void didUpdateItem(LocationStackItem item) {
-    // force rebuild of page from the scratch
+    // force page rebuild from the scratch
     if (item.location case final MultiLocation<Object?> location) {
-      item.children.selectChild(location.activeIndex);
+      item.children.selectChild(location.activeIndex, false);
     }
     item.reset();
     notifyListeners();

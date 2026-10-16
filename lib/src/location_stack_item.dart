@@ -89,11 +89,10 @@ final class LocationStackItem extends LinkedListEntry<LocationStackItem> {
   ///
   /// This is needed to prevent occurrence of empty multi or shell locations.
   ///
-  /// When ancestor item is removed instead, [result] is passed to it and
-  /// current route is completed with `null`.
-  ///
-  /// Since you cannot push initial location for multi or shell location this
-  /// makes sense.
+  /// Since you cannot push initial location for multi or shell location it
+  /// makes sense to bubble up the result, so when ancestor item is removed
+  /// instead, [result] is rerouted to that ancestor and current route is
+  /// completed with `null`.
   bool remove([ FutureOr<Object?>? result, ]) {
     if (removeTarget case final itemToRemove?) {
       itemToRemove.stack.didRemoveItem(
@@ -121,15 +120,14 @@ final class LocationStackItem extends LinkedListEntry<LocationStackItem> {
       // we have to remove parent
       itemToRemove = itemToRemove!.stack.parentItem;
     }
-    // assert(itemToRemove != null, 'cannot pop the last page of router');
-    if (itemToRemove == null) {
-      return null;
-    }
+    // for last page in the router this will be null
     return itemToRemove;
   }
 
   void reset() {
     page = null;
     encoded = null;
+    // shellNavigator = null;
+    // shellNavigatorKey = null;
   }
 }

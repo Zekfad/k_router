@@ -1,10 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
+import 'current_location.dart';
 import 'k_navigator.dart';
 import 'location.dart';
-import 'location_error_widget_builder.dart';
+import 'location_error_page_builder.dart';
 import 'location_stack.dart';
+import 'location_stack_item.dart';
 
 
 /// Signature for callback that is executed next frame after router is
@@ -31,8 +33,8 @@ class KRouterDelegate extends RouterDelegate<LocationStack> with ChangeNotifier,
 
   /// Callback that is executed next frame after router is initialized.
   final OnDidInitialize? onDidInitialize;
-  /// Builder for replacement widget if location page builder failed.
-  final LocationErrorWidgetBuilder? errorBuilder;
+  /// Builder for replacement [Page] for when location builder fails.
+  final LocationErrorPageBuilder? errorBuilder;
 
   @override
   LocationStack currentConfiguration;
@@ -70,15 +72,53 @@ class KRouterDelegate extends RouterDelegate<LocationStack> with ChangeNotifier,
   }
 
   @override
+  void dispose() {
+    currentConfiguration.dispose();
+    super.dispose();
+  }
+
+  @override
   Future<bool> popRoute() {
+    // code is identical to [KNavigator.getPopTargetLocation], except here
+    // navigator is used instead of location
     final leaf = currentConfiguration.leafActiveItem;
-    final target = leaf.removeTarget;
-    if (target == null) {
-      // cannot remove last page, so we let root navigator decide
-      return navigatorKey.currentState!.maybePop();
+
+    // check if leaf's navigator has some blocking overlay, such as drawer.
+    late Route<Object?> leafsNavigatorTopRoute;
+    leaf.outerNavigatorKey.currentState!.popUntil((route) {
+      leafsNavigatorTopRoute = route;
+      return true;
+    });
+    if (leafsNavigatorTopRoute.willHandlePopInternally) {
+      return leaf.outerNavigatorKey.currentState!.maybePop();
     }
-    final navigatorState = target.outerNavigatorKey.currentState!;
-    return navigatorState.maybePop();
+
+    // popping leaf is possible, so we traverse up to nearest navigator that can
+    // pop
+    // may target outer shell or multi shell, and [outerNavigatorKey] is of that
+    // target shell/multi shell
+    var result = leaf.removeTarget?.outerNavigatorKey.currentState;
+    var parentRoute = ModalRoute.of(leaf.outerNavigatorKey.currentContext!);
+    while (parentRoute != null) {
+      // parent route is blocked by dialog: we target it's navigator
+      if (!parentRoute.isCurrent) {
+        final parentNavigator = parentRoute.navigator!;
+        final surroundingLocation = CurrentLocation.maybeOf(parentNavigator.context, listen: false);
+        if (surroundingLocation == null) {
+          assert(parentNavigator == navigatorKey.currentState, 'invalid state');
+          // its root navigator and it doesn't have any surrounding location
+          return parentNavigator.maybePop();
+        }
+        final parentItem = LocationStackItem.locationCache[surroundingLocation]!;
+        result = parentItem.removeTarget?.outerNavigatorKey.currentState;
+        parentRoute = ModalRoute.of(parentItem.outerNavigatorKey.currentContext!);
+      } else {
+        parentRoute = ModalRoute.of(parentRoute.navigator!.context);
+      }
+    }
+    return result?.maybePop()
+      // cannot remove last page, so we let root navigator decide
+      ?? navigatorKey.currentState!.maybePop();
   }
 
   @override
@@ -90,12 +130,6 @@ class KRouterDelegate extends RouterDelegate<LocationStack> with ChangeNotifier,
     navigatorKey: navigatorKey,
     errorBuilder: errorBuilder,
   );
-
-  @override
-  void dispose() {
-    currentConfiguration.dispose();
-    super.dispose();
-  }
 
   /// Trigger update:
   ///

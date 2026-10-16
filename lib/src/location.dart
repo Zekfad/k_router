@@ -1,6 +1,6 @@
-/// @docImport 'package:flutter/cupertino.dart';
-/// @docImport 'package:flutter/material.dart';
+/// @docImport 'package:cupertino_ui/cupertino_ui.dart';
 /// @docImport 'package:k_router/k_router.dart';
+/// @docImport 'package:material_ui/material_ui.dart';
 library;
 
 import 'package:flutter/widgets.dart';
@@ -52,8 +52,12 @@ abstract interface class Location<T> implements Listenable {
   /// {@template k_router_location_build_context}
   /// This method is executed in [context] of [KNavigator], you may consider
   /// using [Builder] or [StatefulWidget] for acquiring new context.
+  /// 
+  /// When [context] dependencies update all navigator pages will be rebuilt.
   /// {@endtemplate}
   /// 
+  /// Lookup [InheritedWidget]s via [context] only if [Page] arguments are
+  /// depend on them.
   @factory
   Page<T> buildPage(BuildContext context, {
     required LocalKey key,
@@ -67,6 +71,10 @@ abstract interface class Location<T> implements Listenable {
   /// Result of this method will be passed to [buildPage] as `child` parameter.
   /// 
   /// {@macro k_router_location_build_context}
+  /// {@template k_router_location_build}
+  /// Use [Builder] to create new [BuildContext] and use it to lookup required
+  /// [InheritedWidget]s.
+  /// {@endtemplate}
   Widget build(BuildContext context);
 
   /// Dispose this location and it's resources.
@@ -107,6 +115,7 @@ abstract interface class ShellLocation<T> implements LocationWithChildren<T> {
   /// or it can be used inline as part of shell for multi location.
   /// 
   /// {@macro k_router_location_build_context}
+  /// {@macro k_router_location_build}
   @override
   Widget build(BuildContext context, {
     Widget? navigator,

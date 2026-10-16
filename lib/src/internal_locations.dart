@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:meta/meta.dart';
 
 import 'location.dart';
@@ -50,17 +50,14 @@ final class UnknownLocation extends BaseLocation<Never> with LocationWithStateEn
   InternalLocations get discriminator => InternalLocations.unknown;
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text('Unknown location'),
-    ),
-    body: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text('Name: $title'),
-        Text('Uri: $uri'),
-        Text('State: $state'),
-      ],
-    ),
+  Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text('Unknown location'),
+      Text('Name: $title'),
+      Text('Uri: $uri'),
+      Text('State: $state'),
+    ],
   );
 }

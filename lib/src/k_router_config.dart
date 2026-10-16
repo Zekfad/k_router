@@ -6,7 +6,7 @@ import 'k_route_information_provider.dart';
 import 'k_router_delegate.dart';
 import 'location.dart';
 import 'location_codec.dart';
-import 'location_error_widget_builder.dart';
+import 'location_error_page_builder.dart';
 import 'location_stack.dart';
 
 
@@ -43,7 +43,7 @@ class KRouterConfig extends RouterConfig<LocationStack> {
     required LocationCodecMap locationCodecs,
     DeepLinkHandler? onDeepLink,
     OnDidInitialize? onDidInitialize,
-    LocationErrorWidgetBuilder? errorBuilder,
+    LocationErrorPageBuilder? errorBuilder,
   }) {
     final delegate = KRouterDelegate(
       initialLocation: initialLocation,

@@ -3,6 +3,8 @@ include: package:zekfad_lints/flutter.yaml
 analyzer:
   errors:
     body_might_complete_normally_nullable: error
+  exclude:
+    - build/**
 
 linter:
   rules:

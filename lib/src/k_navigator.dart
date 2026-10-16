@@ -2,13 +2,14 @@ import 'dart:async';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' show MaterialPage;
 import 'package:flutter/widgets.dart';
+import 'package:meta/meta.dart';
 
 import 'current_location.dart';
+import 'k_error_page.dart';
 import 'k_router_delegate.dart';
 import 'location.dart';
-import 'location_error_widget_builder.dart';
+import 'location_error_page_builder.dart';
 import 'location_pop_type.dart';
 import 'location_stack.dart';
 import 'location_stack_change_notification.dart';
@@ -26,11 +27,10 @@ class KNavigator extends InheritedWidget {
     required LocationStack stack,
     required this.navigatorKey,
     required String restorationScopeId,
-    required LocationErrorWidgetBuilder? errorBuilder,
+    required LocationErrorPageBuilder? errorBuilder,
     super.key,
     bool root = false,
   }) :
-    _delegate = delegate,
     _stack = stack,
     _restorationScopeId = restorationScopeId,
     super(
@@ -51,7 +51,7 @@ class KNavigator extends InheritedWidget {
     required LocationStack stack,
     required GlobalKey<NavigatorState> navigatorKey,
     required String restorationScopeId,
-    required LocationErrorWidgetBuilder? errorBuilder,
+    required LocationErrorPageBuilder? errorBuilder,
     Key? key,
     bool root = false,
   }) => KNavigator._new(
@@ -69,7 +69,6 @@ class KNavigator extends InheritedWidget {
   /// Should only be used to compare notification levels via
   /// [LocationStackChangeNotification.navigatorKey].
   final GlobalKey<NavigatorState> navigatorKey;
-  final KRouterDelegate _delegate;
   final LocationStack _stack;
   final String _restorationScopeId;
 
@@ -157,7 +156,7 @@ class KNavigator extends InheritedWidget {
     assert(result, 'Cannot select requested child: index is out of bounds');
   }
 
-  /// Retrieves active location of this navigator.
+  /// Retrieves immediate active location of this navigator.
   Location<Object?>? get activeLocation {
     if (_stack.items.isEmpty) {
       return null;
@@ -210,6 +209,7 @@ class KNavigator extends InheritedWidget {
   )?.location;
 
   /// Returns stack path for the [location] if it is mounted.
+  @experimental
   String? stackPathOf<T>(Location<T> location) {
     var item = LocationStackItem.locationCache[location];
     String? path;
@@ -241,6 +241,7 @@ class KNavigator extends InheritedWidget {
   /// If you expect your hero to be present twice (as top location and inside of
   /// nested navigator consider disabling [allowCrossBorders], that will make
   /// returned prefix unique to [location]'s level of nesting).
+  @experimental
   String? heroPrefixFor<T>(Location<T> location, { bool allowCrossBorders = true, }) {
     var item = LocationStackItem.locationCache[location];
     assert(item != null, 'Unmounted location.');
@@ -266,6 +267,54 @@ class KNavigator extends InheritedWidget {
     return path;
   }
 
+  /// Retrieves location that accept system back gesture such as predictive back
+  /// on Android or slide on iOS.
+  /// 
+  /// This may require expensive widget and navigation tree traversal, intended
+  /// for usage inside of [PredictiveBackRoute.popGestureEnabled] which is
+  /// efficiently culled by [PredictiveBackRoute.isCurrent].
+  /// 
+  /// This should only be used between frames, not during build.
+  static Location<Object?>? getPopTargetLocation(BuildContext context) {
+    final leaf = of(context, listen: false, rootNavigator: true)._stack.leafActiveItem;
+
+    // check if leaf's navigator has some blocking overlay, such as drawer.
+    late Route<Object?> leafsNavigatorTopRoute;
+    leaf.outerNavigatorKey.currentState!.popUntil((route) {
+      leafsNavigatorTopRoute = route;
+      return true;
+    });
+    if (leafsNavigatorTopRoute.willHandlePopInternally) {
+      return leaf.location;
+    }
+
+    // popping leaf is possible, so we traverse up to nearest navigator that can
+    // pop
+    // may target outer shell or multi shell, and [outerNavigatorKey] is of that
+    // target shell/multi shell
+    var result = leaf.removeTarget?.location;
+    var parentRoute = ModalRoute.of(leaf.outerNavigatorKey.currentContext!);
+    while (parentRoute != null) {
+      // parent route is blocked by dialog: we target it's navigator
+      if (!parentRoute.isCurrent) {
+        final parentNavigator = parentRoute.navigator!;
+        final surroundingLocation = CurrentLocation.maybeOf(parentNavigator.context, listen: false);
+        if (surroundingLocation == null) {
+          // its root navigator and it doesn't have any surrounding location
+          // and since it's not active it means there is a dialog in root
+          // navigator
+          return null;
+        }
+        final parentItem = LocationStackItem.locationCache[surroundingLocation]!;
+        result = parentItem.removeTarget?.location;
+        parentRoute = ModalRoute.of(parentItem.outerNavigatorKey.currentContext!);
+      } else {
+        parentRoute = ModalRoute.of(parentRoute.navigator!.context);
+      }
+    }
+    return result;
+  }
+
   /// Checks whether [context] is part of leaf active location of root navigator.
   ///
   /// {@template k_router_di_listen_param}
@@ -273,8 +322,10 @@ class KNavigator extends InheritedWidget {
   /// [context].
   /// {@endtemplate}
   static bool isContextActive(BuildContext context, { bool listen = true, }) =>
-    of(context, listen: listen)._delegate.currentConfiguration.leafActiveItem
-      .location == CurrentLocation.of(context, listen: listen);
+    // of(context, listen: listen)._delegate.currentConfiguration.leafActiveItem
+    //   .location == CurrentLocation.of(context, listen: listen);
+    of(context, listen: listen, rootNavigator: true)
+      .leafActiveLocation == CurrentLocation.of(context, listen: listen);
 
   /// Try to get [BuildContext] of shell inside of [location].
   static BuildContext? getContextOfShell(ShellLocation<Object?> location) {
@@ -301,9 +352,40 @@ class KNavigator extends InheritedWidget {
   /// Try to get [KNavigator] from this [context].
   ///
   /// {@macro k_router_di_listen_param}
-  static KNavigator? maybeOf(BuildContext context, { bool listen = true, }) => listen
-    ? context.dependOnInheritedWidgetOfExactType<KNavigator>()
-    : context.getInheritedWidgetOfExactType<KNavigator>();
+  /// 
+  /// {@template k_router_di_root_navigator_param}
+  /// If [rootNavigator] is `true` this call returns furthest available
+  /// navigator.
+  /// {@endtemplate}
+  static KNavigator? maybeOf(BuildContext context, {
+    bool listen = true,
+    bool rootNavigator = false,
+  }) {
+    if (!rootNavigator) {
+      return listen
+        ? context.dependOnInheritedWidgetOfExactType<KNavigator>()
+        : context.getInheritedWidgetOfExactType<KNavigator>();
+    }
+
+    var previousAncestor = context.getElementForInheritedWidgetOfExactType<KNavigator>();
+    while (previousAncestor != null) {
+      Element? parent;
+      previousAncestor.visitAncestorElements((element) {
+        parent = element;
+        return false;
+      });
+      final ancestor = parent?.getElementForInheritedWidgetOfExactType<KNavigator>();
+      if (ancestor == null) {
+        // no more elements on above available
+        return (listen
+          ? context.dependOnInheritedElement(previousAncestor)
+          : previousAncestor.widget
+        ) as KNavigator;
+      }
+      previousAncestor = ancestor;
+    }
+    return null;
+  }
 
   /// Try to get [KNavigator] from context of shell inside of [location].
   static KNavigator? maybeOfShell(ShellLocation<Object?> location) {
@@ -317,6 +399,20 @@ class KNavigator extends InheritedWidget {
     final item = LocationStackItem.locationCache[location];
     assert(item != null, 'Unmounted location.');
     return item?.children.activeItem!.shellNavigator;
+  }
+
+  /// Require [KNavigator] from this [context].
+  ///
+  /// {@macro k_router_di_listen_param}
+  /// 
+  /// {@macro k_router_di_root_navigator_param}
+  static KNavigator of(BuildContext context, {
+    bool listen = true,
+    bool rootNavigator = false,
+  }) {
+    final result = maybeOf(context, listen: listen, rootNavigator: rootNavigator);
+    assert(result != null, 'No KNavigator found in context');
+    return result!;
   }
 
   /// Require [KNavigator] from context of shell inside of [location].
@@ -333,14 +429,6 @@ class KNavigator extends InheritedWidget {
     return result!;
   }
 
-  /// Require [KNavigator] from this [context].
-  ///
-  /// {@macro k_router_di_listen_param}
-  static KNavigator of(BuildContext context, { bool listen = true, }) {
-    final result = maybeOf(context, listen: listen);
-    assert(result != null, 'No KNavigator found in context');
-    return result!;
-  }
 
   @override
   bool updateShouldNotify(covariant KNavigator oldWidget) =>
@@ -377,7 +465,7 @@ class _KNavigator extends StatefulWidget {
   final LocationStack stack;
   final GlobalKey<NavigatorState> navigatorKey;
   final String restorationScopeId;
-  final LocationErrorWidgetBuilder? errorBuilder;
+  final LocationErrorPageBuilder? errorBuilder;
   final bool root;
 
   @override
@@ -399,10 +487,14 @@ class _KNavigator extends StatefulWidget {
 class _KNavigatorState extends State<_KNavigator> {
   late final List<NavigatorObserver> _observers = [
     _KNavigatorObserver(
-      didPopRoute: _onDidPopRoute,
+      didPopRoute: _didPopOrRemoveRoute,
+      // didRemoveRoute: _didPopOrRemoveRoute,
+      didRemoveRoute: _didRemoveRoute,
     ),
   ];
   HeroController? _heroController;
+
+  var _initialized = false;
 
   @override
   void initState() {
@@ -411,6 +503,19 @@ class _KNavigatorState extends State<_KNavigator> {
       _heroController = HeroController();
     }
     widget.stack.navigatorKey = widget.navigatorKey;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_initialized) {
+      for (final item in widget.stack.items) {
+        // only rebuild page without resetting encoding state
+        item.page = null;
+      }
+    } else {
+      _initialized = true;
+    }
   }
 
   @override
@@ -446,12 +551,31 @@ class _KNavigatorState extends State<_KNavigator> {
   }
 
 
-  void _onDidRemovePage(Page<Object?> page) {
+  void _didRemovePage(Page<Object?> page) {
     // called when router finishes pop animation and page is gone
   }
 
-  void _onDidPopRoute(Route<Object?> route) {
-    // called right after pop is confirmed
+  void _didRemoveRoute(Route<Object?> route) {
+    // called right after route is removed
+    if (route.settings case final Page<Object?> page) {
+      final item = widget.stack.findPage(page, recursive: true);
+      if (item == null) {
+        return;
+      }
+      if (item.remove(route.popped)) {
+        item
+          ..shellNavigatorKey = null
+          ..shellNavigator = null;
+      } else {
+        // add back last item to prevent black screen
+        widget.stack.triggerUpdate();
+      }
+    }
+  }
+
+
+  void _didPopOrRemoveRoute(Route<Object?> route) {
+    // called right after pop is confirmed or when route is removed
     if (route.settings case final Page<Object?> page) {
       final item = widget.stack.findPage(page, recursive: true);
       if (item == null) {
@@ -501,25 +625,25 @@ class _KNavigatorState extends State<_KNavigator> {
           child: currentLocationFactory(
             key: ValueKey(location),
             location: location,
-            child: location.build(
-              context,
-              children: [
-                for (final (childIndex, childItem) in item.children.items.indexed)
-                  RestorationScope(
-                    restorationId: '${widget.restorationScopeId}/$index/$childIndex',
-                    // propagate focus changes to router
-                    child: _GroupFocusListener(
-                      onFocus: () => item.children.selectChild(childIndex),
-                      child: Listener(
-                        onPointerDown: (event) => item.children.selectChild(childIndex),
-                        child: _StackListener(
-                          delegate: widget.delegate,
-                          stack: item.children,
-                          onChange: () {
-                            // trigger rebuild of shell when children changes
-                            item.reset();
-                            item.stack.triggerUpdate();
-                          },
+            child: _StackListener(
+              delegate: widget.delegate,
+              stack: item.children,
+              onChange: () {
+                // trigger rebuild of all shells when any of them changes
+                item.reset();
+                item.stack.triggerUpdate();
+              },
+              child: location.build(
+                context,
+                children: [
+                  for (final (childIndex, childItem) in item.children.items.indexed)
+                    RestorationScope(
+                      restorationId: '${widget.restorationScopeId}/$index/$childIndex',
+                      // propagate focus changes to router
+                      child: _GroupFocusListener(
+                        onFocus: () => item.children.selectChild(childIndex),
+                        child: Listener(
+                          onPointerDown: (event) => item.children.selectChild(childIndex),
                           child: currentLocationFactory(
                             key: ValueKey(childItem.location),
                             location: childItem.location,
@@ -539,8 +663,8 @@ class _KNavigatorState extends State<_KNavigator> {
                         ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -557,13 +681,18 @@ class _KNavigatorState extends State<_KNavigator> {
         ),
       };
     } catch (error, stackTrace) {
-      return MaterialPage(
+      return item.page = widget.errorBuilder?.call(
+        context,
         key: ValueKey(item.location),
         name: item.location.uri.toString(),
         restorationId: '$index#${item.location.discriminator.discriminator}',
-        maintainState: false,
-        child: widget.errorBuilder?.call(context, error, stackTrace)
-          ?? ErrorWidget(error),
+        error: error,
+        stackTrace: stackTrace,
+      ) ?? KErrorPage(
+        key: ValueKey(item.location),
+        name: item.location.uri.toString(),
+        error: error,
+        stackTrace: stackTrace,
       );
     }
   }
@@ -602,22 +731,13 @@ class _KNavigatorState extends State<_KNavigator> {
               _buildPage(context, index, item)
           ];
         }
-        final navigator = Navigator(
+        return Navigator(
           key: widget.navigatorKey,
           restorationScopeId: widget.restorationScopeId,
           pages: pages,
-          onDidRemovePage: _onDidRemovePage,
+          onDidRemovePage: _didRemovePage,
           observers: _observers,
         );
-        // if (!widget.root) {
-        //   final parent = widget.stack.parentItem!;
-        //   return NavigatorPopHandler<Object?>(
-        //     enabled: parent == parent.stack.activeItem!,
-        //     onPopWithResult: (result) => widget.navigatorKey.currentState!.maybePop(result),
-        //     child: navigator,
-        //   );
-        // }
-        return navigator;
       },
     );
     if (_heroController case final controller?) {
@@ -633,14 +753,19 @@ class _KNavigatorState extends State<_KNavigator> {
 class _KNavigatorObserver extends NavigatorObserver {
   _KNavigatorObserver({
     required this.didPopRoute,
+    required this.didRemoveRoute,
   });
 
   void Function(Route<Object?> route) didPopRoute;
+  void Function(Route<Object?> route) didRemoveRoute;
 
   @override
-  void didPop(Route<Object?> route, Route<Object?>? previousRoute) {
+  void didPop(Route<Object?> route, Route<Object?>? previousRoute) =>
     didPopRoute(route);
-  }
+  
+  @override
+  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+    didRemoveRoute(route);
 }
 
 class _StackListener extends StatefulWidget {
