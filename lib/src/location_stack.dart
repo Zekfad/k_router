@@ -217,7 +217,7 @@ final class LocationStack extends ChangeNotifier {
   }
 
   /// Removes item and it's linked data nodes.
-  /// 
+  ///
   /// * item is removed from [cachedItems]
   /// * item in unlinked from [items]
   /// * removed listeners for this item's location updates
@@ -251,7 +251,7 @@ final class LocationStack extends ChangeNotifier {
   }
 
   /// Silently detaches item from the stack.
-  /// 
+  ///
   /// This works the same as removing but:
   /// * location is not disposed
   /// * completer is not attempted to complete with null

@@ -33,7 +33,7 @@ class KMaterialPage<T> extends MaterialPage<T> {
   /// [Location] this page was created for, used to correctly configure
   /// [PredictiveBackRoute.popGestureEnabled] and prevent popping locations that
   /// are not indented to be popped by global back gesture.
-  /// 
+  ///
   /// Use [CurrentLocation.of] instead.
   final Location<T> location;
 

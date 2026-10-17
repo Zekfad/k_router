@@ -11,18 +11,18 @@ import 'k_navigator.dart';
 /// When a [State] object wants access to the return value of a [Location]
 /// object it has pushed onto the [KNavigator], a [RestorableLocationFuture]
 /// ensures that it will also have access to that value after state restoration.
-/// 
+///
 /// To show a new location on the navigator defined by the [navigatorFinder],
 /// call [present], which will invoke the [onPresent] callback. The [onPresent]
 /// callback must add a new location to the navigator provided to it.
 /// When the newly added location completes, the [onComplete] callback executes.
 /// It is given the return value of the location, which may be `null`.
-/// 
+///
 /// If the property is restored to a state in which [present] had been called on
 /// it, but the location has not completed yet, the [RestorableLocationFuture]
 /// will obtain the restored location object from the navigator again and call
 /// [onComplete] once it completes.
-/// 
+///
 /// The [RestorableLocationFuture] can only keep track of one active location.
 /// When [present] has been called to add a location, it may only be called
 /// again after the previously added location has completed.
@@ -103,7 +103,7 @@ final class RestorableLocationFuture<T> extends RestorableProperty<int?> {
   }
 
   KNavigator get _navigator => navigatorFinder(state.context);
-  
+
   void _hookOntoLocationFuture(int value) {
     _currentId = value;
     final result = _navigator.getLocationResult<T>(value);

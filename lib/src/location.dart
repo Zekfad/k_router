@@ -11,14 +11,14 @@ import 'location_discriminator.dart';
 
 
 /// Base interface for navigator location.
-/// 
+///
 /// Locations are single-use objects, you MUST never reuse location object
 /// because it's automatically disposed by navigator after it's served it's
 /// purpose.
 @optionalTypeArgs
 abstract interface class Location<T> implements Listenable {
   /// Location discriminator.
-  /// 
+  ///
   /// __MUST__ be unique for each user location class.
   LocationDiscriminator get discriminator;
   /// Location URI, can be updated and update will be applied as soon as router
@@ -29,33 +29,33 @@ abstract interface class Location<T> implements Listenable {
   String? get title;
 
   /// Create page for insertion into [Navigator.pages].
-  /// 
+  ///
   /// You __MUST__ pass [key] to [Page.key]. Because this page will
   /// be recreated occasionally and moved around in [Navigator.pages] this is
   /// required to correctly preserve page state.
-  /// 
+  ///
   /// You __MUST__ pass [name] to [Page.name]. Flutter internally uses name in
   /// some cases and it must be a valid [Uri] (naming is a bit confusing).
-  /// 
+  ///
   /// You __MUST__ pass [restorationId] to [Page.restorationId]. This ensures
   /// correct state restoration for page and it's contents.
-  /// 
+  ///
   /// You __MUST__ pass [child] to [MaterialPage.child]/[CupertinoPage.child].
-  /// 
+  ///
   /// This method can be called multiple times (for example after location
   /// updates). You should not reference returned page object directly.
-  /// 
+  ///
   /// If you're converting [Route] to [Page] by overriding [Page.createRoute],
   /// you should reference page only though [Route.settings] getter which will
   /// always point to an actual page object.
-  /// 
+  ///
   /// {@template k_router_location_build_context}
   /// This method is executed in [context] of [KNavigator], you may consider
   /// using [Builder] or [StatefulWidget] for acquiring new context.
-  /// 
+  ///
   /// When [context] dependencies update all navigator pages will be rebuilt.
   /// {@endtemplate}
-  /// 
+  ///
   /// Lookup [InheritedWidget]s via [context] only if [Page] arguments are
   /// depend on them.
   @factory
@@ -67,9 +67,9 @@ abstract interface class Location<T> implements Listenable {
   });
 
   /// Build method for page content.
-  /// 
+  ///
   /// Result of this method will be passed to [buildPage] as `child` parameter.
-  /// 
+  ///
   /// {@macro k_router_location_build_context}
   /// {@template k_router_location_build}
   /// Use [Builder] to create new [BuildContext] and use it to lookup required
@@ -86,7 +86,7 @@ abstract interface class Location<T> implements Listenable {
 sealed class LocationWithChildren<T> implements Location<T> {
   /// {@template k_router_location_children}
   /// This list is not reactive and checked only when you push location.
-  /// 
+  ///
   /// __MUST__ not be empty.
   /// {@endtemplate}
   List<Location<Object?>> get children;
@@ -96,7 +96,7 @@ sealed class LocationWithChildren<T> implements Location<T> {
 @optionalTypeArgs
 abstract interface class ShellLocation<T> implements LocationWithChildren<T> {
   /// Initial children for this shell.
-  /// 
+  ///
   /// {@macro k_router_location_children}
   @override
   List<Location<Object?>> get children;
@@ -110,10 +110,10 @@ abstract interface class ShellLocation<T> implements LocationWithChildren<T> {
   });
 
   /// Build method for page content.
-  /// 
+  ///
   /// Result of this method will be passed to [buildPage] as `child` parameter
   /// or it can be used inline as part of shell for multi location.
-  /// 
+  ///
   /// {@macro k_router_location_build_context}
   /// {@macro k_router_location_build}
   @override
@@ -123,14 +123,14 @@ abstract interface class ShellLocation<T> implements LocationWithChildren<T> {
 }
 
 /// Location that allows you to render multiple parallel navigators with shells.
-/// 
+///
 /// __Note__: beware that [children] shells are rendered as part of this
 /// location, which means that hero widgets that are part of shells can cause
 /// duplication issue.
 @optionalTypeArgs
 abstract interface class MultiLocation<T> implements LocationWithChildren<T> {
   /// Initial child shells for this multi location.
-  /// 
+  ///
   /// {@macro k_router_location_children}
   @override
   List<ShellLocation<Object?>> get children;

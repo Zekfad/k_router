@@ -70,11 +70,11 @@ base class LocationCodec<T> extends Codec<Location<T>, LocationEncoded> {
     )),
     _ => throw FormatException('Invalid format of location primitive state', encoded),
   };
-  
+
   @override
   Converter<LocationEncoded, Location<T>> get decoder =>
     _FunctionConverter(decode);
-  
+
   @override
   Converter<Location<T>, LocationEncoded> get encoder =>
     _FunctionConverter(encode);

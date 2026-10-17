@@ -27,14 +27,14 @@ class CurrentLocation extends InheritedWidget {
     : context.getInheritedWidgetOfExactType<CurrentLocation>()?.location;
 
   /// Retrieve [Location] in which this [context] is contained.
-  /// 
+  ///
   /// {@macro k_router_di_listen_param}
   static Location<Object?> of(BuildContext context, { bool listen = true, }) {
     final result = maybeOf(context, listen: listen);
     assert(result != null, 'No CurrentLocation found in context');
     return result!;
   }
-  
+
   @override
   bool updateShouldNotify(covariant CurrentLocation oldWidget) =>
     !identical(oldWidget.location, location);

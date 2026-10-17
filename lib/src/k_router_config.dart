@@ -13,29 +13,29 @@ import 'location_stack.dart';
 /// {@template k_router_router_config}
 /// Router config crates and configures router delegate, parser, provider and
 /// back handler.
-/// 
+///
 /// This is the only intended router initialization, because some parts are very
 /// tightly connected and requires specific configuration to work property.
 /// {@endtemplate}
 class KRouterConfig extends RouterConfig<LocationStack> {
   /// {@macro k_router_router_config}
-  /// 
+  ///
   /// [initialLocation] is used as initial location and may be build at least
   /// once even if it's never used.
-  /// 
+  ///
   /// [locationCodecs] map is used to (de)serialize locations for state
   /// restoration and browser navigation. This map is required and __MUST__
   /// contain codecs for every user [Location].
-  /// 
+  ///
   /// [onDeepLink] is a deep link handler function, if `null` deep links
   /// handling is disabled (which is fine for mobile apps, but can leave you in
   /// broken state in browser if user changes URL). Initial deep link is also
   /// handled by this function and can replace [initialLocation] when
   /// [DeepLinkResult.replaceStack] is returned.
-  /// 
+  ///
   /// [onDidInitialize] is a callback that allows you to run logic after router
   /// initialization and tells you whether app was restored or cold started.
-  /// 
+  ///
   /// [errorBuilder] is a builder for a replacement widget in case location's
   /// page is built with an error.
   factory KRouterConfig({

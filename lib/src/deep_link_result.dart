@@ -38,7 +38,7 @@ final class DeepLinkIgnore implements DeepLinkResult {
 final class DeepLinkPush implements DeepLinkResult {
   const DeepLinkPush._(this.location);
 
-  final Location<Object?> location; 
+  final Location<Object?> location;
 }
 
 /// @nodoc
@@ -46,7 +46,7 @@ final class DeepLinkPush implements DeepLinkResult {
 final class DeepLinkPushToRoot implements DeepLinkResult {
   const DeepLinkPushToRoot._(this.location);
 
-  final Location<Object?> location; 
+  final Location<Object?> location;
 }
 
 /// @nodoc
@@ -54,5 +54,5 @@ final class DeepLinkPushToRoot implements DeepLinkResult {
 final class DeepLinkReplaceStack implements DeepLinkResult {
   const DeepLinkReplaceStack._(this.location);
 
-  final Location<Object?> location; 
+  final Location<Object?> location;
 }

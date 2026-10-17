@@ -2,13 +2,13 @@ import 'location_codec.dart';
 
 
 /// Location discriminator interface.
-/// 
+///
 /// [discriminator] must be a globally unique integer for mapping locations
 /// to their codecs.
-/// 
+///
 /// This is made on top of enum because state restoration is done across process
 /// restart which means any data must be available from the start.
-/// 
+///
 /// Use `values` with [LocationDiscriminatorCodecsMap.toLocationCodecMap] to
 /// quickly turn enum with with mixin into a [LocationCodecMap].
 mixin LocationDiscriminator on Enum {

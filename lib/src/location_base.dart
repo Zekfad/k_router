@@ -14,7 +14,7 @@ import 'location_pop_type.dart';
 /// {@template k_router_base_location_header}
 /// Base implementation for a simple location based on [MaterialPage].
 /// {@endtemplate}
-/// 
+///
 /// {@template k_router_base_location_ctors}
 /// You have 2 constructors:
 /// * Unnamed constructor is used for creating location for pushing/replacing.
@@ -94,7 +94,7 @@ abstract base class BaseLocation<T> with ChangeNotifier, LocationPopType<T> impl
 /// {@template k_router_base_multi_location_header}
 /// Base implementation for a multi location based on [MaterialPage].
 /// {@endtemplate}
-/// 
+///
 /// {@macro k_router_base_location_ctors}
 @optionalTypeArgs
 abstract base class BaseMultiLocation<T> extends BaseLocation<T> implements MultiLocation<T> {
@@ -141,7 +141,7 @@ abstract base class BaseMultiLocation<T> extends BaseLocation<T> implements Mult
 /// {@template k_router_base_shell_location_header}
 /// Base implementation for a shell location based on [MaterialPage].
 /// {@endtemplate}
-/// 
+///
 /// {@macro k_router_base_location_ctors}
 @optionalTypeArgs
 abstract base class BaseShellLocation<T> extends BaseLocation<T> implements ShellLocation<T> {

@@ -20,7 +20,7 @@ class KRouteInformationProvider extends PlatformRouteInformationProvider {
   /// K Router delegate.
   final KRouterDelegate delegate;
   /// Deep link handler.
-  /// 
+  ///
   /// If none provided deep linking functionality is disabled and all deep links
   /// are ignored.
   final DeepLinkHandler? deepLinkHandler;

@@ -269,11 +269,11 @@ class KNavigator extends InheritedWidget {
 
   /// Retrieves location that accept system back gesture such as predictive back
   /// on Android or slide on iOS.
-  /// 
+  ///
   /// This may require expensive widget and navigation tree traversal, intended
   /// for usage inside of [PredictiveBackRoute.popGestureEnabled] which is
   /// efficiently culled by [PredictiveBackRoute.isCurrent].
-  /// 
+  ///
   /// This should only be used between frames, not during build.
   static Location<Object?>? getPopTargetLocation(BuildContext context) {
     final leaf = of(context, listen: false, rootNavigator: true)._stack.leafActiveItem;
@@ -352,7 +352,7 @@ class KNavigator extends InheritedWidget {
   /// Try to get [KNavigator] from this [context].
   ///
   /// {@macro k_router_di_listen_param}
-  /// 
+  ///
   /// {@template k_router_di_root_navigator_param}
   /// If [rootNavigator] is `true` this call returns furthest available
   /// navigator.
@@ -404,7 +404,7 @@ class KNavigator extends InheritedWidget {
   /// Require [KNavigator] from this [context].
   ///
   /// {@macro k_router_di_listen_param}
-  /// 
+  ///
   /// {@macro k_router_di_root_navigator_param}
   static KNavigator of(BuildContext context, {
     bool listen = true,
@@ -762,7 +762,7 @@ class _KNavigatorObserver extends NavigatorObserver {
   @override
   void didPop(Route<Object?> route, Route<Object?>? previousRoute) =>
     didPopRoute(route);
-  
+
   @override
   void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) =>
     didRemoveRoute(route);
