@@ -9,3 +9,4 @@ export 'src/location_discriminator.dart';
 export 'src/location_function_codec.dart';
 export 'src/location_stack_change_notification.dart';
 export 'src/restorable_location_future.dart';
+export 'src/unknown_location.dart' show UnknownLocation;

@@ -21,9 +21,12 @@ final class LocationFunctionCodec<T> extends LocationCodec<T> {
   @pragma('wasm:prefer-inline')
   @pragma('dart2js:prefer-inline')
   @override
-  Map<Object?, Object?> encodeState(Location<T> input) =>
+  LocationEncoded encodeState(Location<T> input) =>
     _stateEncoder?.call(input) ?? super.encodeState(input);
 
+  @pragma('vm:prefer-inline')
+  @pragma('wasm:prefer-inline')
+  @pragma('dart2js:prefer-inline')
   @override
   Location<T> constructLocation(LocationOptions options) =>
     _factory(options);

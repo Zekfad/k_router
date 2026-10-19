@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:meta/meta.dart';
 
-import 'internal_locations.dart';
 import 'location.dart';
+import 'unknown_location.dart';
 
 
 /// Maps discriminator integer to location codec.
@@ -55,21 +55,25 @@ base class LocationCodec<T> extends Codec<Location<T>, LocationEncoded> {
     's': encodeState(input),
   };
 
-  @override
-  Location<T> decode(LocationEncoded encoded) => switch(encoded) {
+  /// Decodes raw [LocationEncoded] into [LocationOptions].
+  static LocationOptions decodeOptions(LocationEncoded encoded) => switch(encoded) {
     {
       'd': final int discriminator,
       'u': final String uri,
       't': final String? title,
       's': final LocationEncoded state,
-    } => constructLocation((
+    } => (
       discriminator: discriminator,
       uri: Uri.parse(uri),
       title: title,
       state: state,
-    )),
+    ),
     _ => throw FormatException('Invalid format of location primitive state', encoded),
   };
+
+  @override
+  Location<T> decode(LocationEncoded encoded) =>
+    constructLocation(decodeOptions(encoded));
 
   @override
   Converter<LocationEncoded, Location<T>> get decoder =>

@@ -64,6 +64,7 @@ final class LocationStack extends ChangeNotifier {
   LocationStackItem? activeItem;
   LocationStackItem? parentItem;
   GlobalKey<NavigatorState>? navigatorKey;
+  bool disposed = false;
 
   LocationStack get leafActiveStack {
     var parentStack = this;
@@ -280,6 +281,10 @@ final class LocationStack extends ChangeNotifier {
     for (final child in items.toList(growable: false)) {
       didRemoveItem(child, notify: false);
     }
+    activeItem = null;
+    parentItem = null;
+    navigatorKey = null;
+    disposed = true;
     super.dispose();
     if (!kReleaseMode) {
       Timeline.finishSync();
@@ -290,4 +295,38 @@ final class LocationStack extends ChangeNotifier {
       );
     }
   }
+
+  // /// Removes all children and then steals all children from [newStack].
+  // /// [newStack] is disposed afterwards. All children has their keys reset.
+  // ///
+  // /// This method allows to effectively replace this stack with [newStack]
+  // /// without loosing links to this instance.
+  // void absorb(LocationStack newStack) {
+  //   // copy to prevent concurrent modification
+  //   for (final child in items.toList(growable: false)) {
+  //     didRemoveItem(child, notify: false);
+  //   }
+  //   _cachedActiveItemIndex = newStack._cachedActiveItemIndex;
+  //   activeItem = newStack.activeItem;
+  //   parentItem = newStack.parentItem;
+  //   // navigatorKey = newStack.navigatorKey;
+  //   navigatorKey = null;
+
+  //   /// Transfer items.
+  //   for (final child in newStack.items.toList(growable: false)) {
+  //     newStack.detachItem(child);
+  //     items.add(child);
+  //     _registerItem(child);
+  //   }
+  //   newStack.dispose();
+  //   _resetKeys();
+  // }
+
+  // void _resetKeys() {
+  //   navigatorKey = null;
+  //   for (final child in items) {
+  //     child.shellNavigatorKey = null;
+  //     child.children._resetKeys();
+  //   }
+  // }
 }

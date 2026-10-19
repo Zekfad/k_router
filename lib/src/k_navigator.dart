@@ -488,8 +488,7 @@ class _KNavigatorState extends State<_KNavigator> {
   late final List<NavigatorObserver> _observers = [
     _KNavigatorObserver(
       didPopRoute: _didPopOrRemoveRoute,
-      // didRemoveRoute: _didPopOrRemoveRoute,
-      didRemoveRoute: _didRemoveRoute,
+      didRemoveRoute: _didPopOrRemoveRoute,
     ),
   ];
   HeroController? _heroController;
@@ -555,25 +554,6 @@ class _KNavigatorState extends State<_KNavigator> {
     // called when router finishes pop animation and page is gone
   }
 
-  void _didRemoveRoute(Route<Object?> route) {
-    // called right after route is removed
-    if (route.settings case final Page<Object?> page) {
-      final item = widget.stack.findPage(page, recursive: true);
-      if (item == null) {
-        return;
-      }
-      if (item.remove(route.popped)) {
-        item
-          ..shellNavigatorKey = null
-          ..shellNavigator = null;
-      } else {
-        // add back last item to prevent black screen
-        widget.stack.triggerUpdate();
-      }
-    }
-  }
-
-
   void _didPopOrRemoveRoute(Route<Object?> route) {
     // called right after pop is confirmed or when route is removed
     if (route.settings case final Page<Object?> page) {
@@ -597,16 +577,16 @@ class _KNavigatorState extends State<_KNavigator> {
       return item.page ??= switch (item.location) {
         final ShellLocation<Object?> shell => shell.buildPage(
           context,
-          key: ValueKey(shell),
+          key: ValueKey(item),
           name: shell.uri.toString(),
           restorationId: '$index#${shell.discriminator.discriminator}',
           child: currentLocationFactory(
-            key: ValueKey(shell),
+            key: ValueKey(item),
             location: shell,
             child: shell.build(
               context,
               navigator: item.shellNavigator = kNavigatorFactory(
-                key: ValueKey(shell),
+                key: ValueKey(item),
                 delegate: widget.delegate,
                 stack: item.children,
                 navigatorKey: item.shellNavigatorKey
@@ -619,11 +599,11 @@ class _KNavigatorState extends State<_KNavigator> {
         ),
         final MultiLocation<Object?> location => location.buildPage(
           context,
-          key: ValueKey(location),
+          key: ValueKey(item),
           name: location.uri.toString(),
           restorationId: '$index#${location.discriminator.discriminator}',
           child: currentLocationFactory(
-            key: ValueKey(location),
+            key: ValueKey(item),
             location: location,
             child: _StackListener(
               delegate: widget.delegate,
@@ -645,12 +625,12 @@ class _KNavigatorState extends State<_KNavigator> {
                         child: Listener(
                           onPointerDown: (event) => item.children.selectChild(childIndex),
                           child: currentLocationFactory(
-                            key: ValueKey(childItem.location),
+                            key: ValueKey(childItem),
                             location: childItem.location,
                             child: (childItem.location as ShellLocation<Object?>).build(
                               context,
                               navigator: childItem.shellNavigator = kNavigatorFactory(
-                                key: ValueKey(childItem.location),
+                                key: ValueKey(childItem),
                                 delegate: widget.delegate,
                                 stack: childItem.children,
                                 navigatorKey: childItem.shellNavigatorKey
@@ -670,11 +650,11 @@ class _KNavigatorState extends State<_KNavigator> {
         ),
         final location => location.buildPage(
           context,
-          key: ValueKey(location),
+          key: ValueKey(item),
           name: location.uri.toString(),
           restorationId: '$index#${location.discriminator.discriminator}',
           child: currentLocationFactory(
-            key: ValueKey(location),
+            key: ValueKey(item),
             location: location,
             child: location.build(context),
           ),
@@ -683,13 +663,13 @@ class _KNavigatorState extends State<_KNavigator> {
     } catch (error, stackTrace) {
       return item.page = widget.errorBuilder?.call(
         context,
-        key: ValueKey(item.location),
+        key: ValueKey(item),
         name: item.location.uri.toString(),
         restorationId: '$index#${item.location.discriminator.discriminator}',
         error: error,
         stackTrace: stackTrace,
       ) ?? KErrorPage(
-        key: ValueKey(item.location),
+        key: ValueKey(item),
         name: item.location.uri.toString(),
         error: error,
         stackTrace: stackTrace,
@@ -699,6 +679,13 @@ class _KNavigatorState extends State<_KNavigator> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.stack.disposed) {
+      // assert(false, 'Used disposed stack');
+      // can happen in some cases when transition animation is triggered
+      // replacing same page with it self (e.g. changing cupertino/material page
+      // class)
+      return const SizedBox.shrink();
+    }
     final child = _StackListener(
       delegate: widget.delegate,
       stack: widget.stack,

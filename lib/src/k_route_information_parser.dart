@@ -7,12 +7,12 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
-import 'internal_locations.dart';
 import 'location.dart';
 import 'location_codec.dart';
 import 'location_stack.dart';
 import 'location_stack_item.dart';
 import 'location_stack_items_list.dart';
+import 'unknown_location.dart';
 
 
 /// K Router information parser.
@@ -91,7 +91,7 @@ class KRouteInformationParser extends RouteInformationParser<LocationStack> {
     final encodedChildren = <Map<Object?, Object?>>[];
     for (final item in children) {
       final codec = locationCodecs[item.location.discriminator.discriminator] ??
-        locationCodecs[InternalLocations.unknown.discriminator] ??
+        locationCodecs[UnknownLocation.locationDiscriminator.discriminator] ??
         const LocationCodec();
       assert(
         !_kDebugValidateCache
@@ -133,6 +133,7 @@ class KRouteInformationParser extends RouteInformationParser<LocationStack> {
             cached.page = null;
             // we can dispose children because this call will first happen in
             // the deepest part of recursion.
+            // cached.children.absorb(childStack);
             cached.children.dispose();
             cached.children = childStack
               ..parentItem = cached;
@@ -141,11 +142,14 @@ class KRouteInformationParser extends RouteInformationParser<LocationStack> {
             id: id,
             location: (
               locationCodecs[discriminator] ??
-              locationCodecs[InternalLocations.unknown.discriminator] ??
+              locationCodecs[UnknownLocation.locationDiscriminator.discriminator] ??
               const LocationCodec()
             ).decode(location),
             children: childStack,
           );
+          if (cached?.location case final existingLocation?) {
+            existingLocation.applyOptions(LocationCodec.decodeOptions(location));
+          }
           if (item.location case final MultiLocation<Object?> multiLocation) {
             multiLocation.activeIndex = item.children.activeItemIndex;
           }

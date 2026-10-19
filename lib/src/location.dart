@@ -28,6 +28,13 @@ abstract interface class Location<T> implements Listenable {
   /// visible as soon as router picks up navigation stack update.
   String? get title;
 
+  /// Called when location restoration data becomes available for existing
+  /// location object. This can also happen on web platform when navigating
+  /// using browser history.
+  ///
+  /// After this method is called, later router will rebuild.
+  void applyOptions(LocationOptions options);
+
   /// Create page for insertion into [Navigator.pages].
   ///
   /// You __MUST__ pass [key] to [Page.key]. Because this page will
@@ -153,10 +160,14 @@ abstract interface class MultiLocation<T> implements LocationWithChildren<T> {
   });
 }
 
-/// Mixin/interface that indicates location can encode it's state via
-/// [encodeState] method.
+/// Interface that indicates location can encode it's state via [encodeState]
+/// method.
 @optionalTypeArgs
-mixin LocationWithStateEncoder<T> on Location<T> {
+abstract interface class LocationWithStateEncoder<T> implements Location<T> {
+  @override
+  @mustBeOverridden
+  void applyOptions(LocationOptions options);
+
   /// Convert this location state to serializable format.
   LocationEncoded encodeState();
 }

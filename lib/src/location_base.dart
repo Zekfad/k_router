@@ -43,6 +43,13 @@ abstract base class BaseLocation<T> with ChangeNotifier, LocationPopType<T> impl
     title: options.title,
   );
 
+  @override
+  @mustCallSuper
+  void applyOptions(LocationOptions options) {
+    _uri = options.uri;
+    _title = options.title;
+  }
+
   Uri _uri;
   String? _title;
 
