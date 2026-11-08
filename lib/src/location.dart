@@ -16,7 +16,7 @@ import 'location_discriminator.dart';
 /// because it's automatically disposed by navigator after it's served it's
 /// purpose.
 @optionalTypeArgs
-abstract interface class Location<T> implements Listenable {
+abstract interface class Location<T extends Object?> implements Listenable {
   /// Location discriminator.
   ///
   /// __MUST__ be unique for each user location class.
@@ -101,7 +101,7 @@ sealed class LocationWithChildren<T> implements Location<T> {
 
 /// Location that allows you to render nested navigator with a custom shell.
 @optionalTypeArgs
-abstract interface class ShellLocation<T> implements LocationWithChildren<T> {
+abstract interface class ShellLocation<T extends Object?> implements LocationWithChildren<T> {
   /// Initial children for this shell.
   ///
   /// {@macro k_router_location_children}
@@ -135,7 +135,7 @@ abstract interface class ShellLocation<T> implements LocationWithChildren<T> {
 /// location, which means that hero widgets that are part of shells can cause
 /// duplication issue.
 @optionalTypeArgs
-abstract interface class MultiLocation<T> implements LocationWithChildren<T> {
+abstract interface class MultiLocation<T extends Object?> implements LocationWithChildren<T> {
   /// Initial child shells for this multi location.
   ///
   /// {@macro k_router_location_children}
@@ -163,7 +163,7 @@ abstract interface class MultiLocation<T> implements LocationWithChildren<T> {
 /// Interface that indicates location can encode it's state via [encodeState]
 /// method.
 @optionalTypeArgs
-abstract interface class LocationWithStateEncoder<T> implements Location<T> {
+abstract interface class LocationWithStateEncoder<T extends Object?> implements Location<T> {
   @override
   @mustBeOverridden
   void applyOptions(LocationOptions options);

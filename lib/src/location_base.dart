@@ -21,7 +21,7 @@ import 'location_pop_type.dart';
 /// * `fromOptions` constructor is useful factory for using with [LocationFunctionCodec]
 /// {@endtemplate}
 @optionalTypeArgs
-abstract base class BaseLocation<T> with ChangeNotifier, LocationPopType<T> implements Location<T>  {
+abstract base class BaseLocation<T extends Object?> with ChangeNotifier, LocationPopType<T> implements Location<T>  {
   /// {@macro k_router_base_location_header}
   BaseLocation({
     required Uri uri,
@@ -104,7 +104,7 @@ abstract base class BaseLocation<T> with ChangeNotifier, LocationPopType<T> impl
 ///
 /// {@macro k_router_base_location_ctors}
 @optionalTypeArgs
-abstract base class BaseMultiLocation<T> extends BaseLocation<T> implements MultiLocation<T> {
+abstract base class BaseMultiLocation<T extends Object?> extends BaseLocation<T> implements MultiLocation<T> {
   /// {@macro k_router_base_multi_location_header}
   BaseMultiLocation({
     required super.uri,
@@ -151,7 +151,7 @@ abstract base class BaseMultiLocation<T> extends BaseLocation<T> implements Mult
 ///
 /// {@macro k_router_base_location_ctors}
 @optionalTypeArgs
-abstract base class BaseShellLocation<T> extends BaseLocation<T> implements ShellLocation<T> {
+abstract base class BaseShellLocation<T extends Object?> extends BaseLocation<T> implements ShellLocation<T> {
   /// {@macro k_router_base_shell_location_header}
   BaseShellLocation({
     required super.uri,
