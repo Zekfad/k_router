@@ -121,7 +121,7 @@ class KNavigator extends InheritedWidget {
 
   /// Tries to pop current location of this navigator from the navigation stack.
   Future<bool> maybePop<T extends Object>([ T? result, ]) {
-    _checkPopType(result);
+    _checkPopType(activeLocation, result);
     return navigatorKey.currentState!.maybePop(result);
   }
 
@@ -131,14 +131,32 @@ class KNavigator extends InheritedWidget {
   /// You must be careful when using this method because it can easily lead to
   /// irrecoverable invalid state of router.
   void forcePop<T extends Object>([ T? result, ]) {
-    _checkPopType(result);
+    _checkPopType(activeLocation, result);
     return navigatorKey.currentState!.pop(result);
   }
 
-  void _checkPopType(Object? result) {
+  /// Tries to remove [location] from it's navigator.
+  ///
+  /// It's considered an error to attempt popping unmounted location.
+  ///
+  /// Returns whether location was removed or not.
+  static bool maybeRemoveLocation<T>(Location<T> location, [ T? result ]) {
+    _checkPopType(location, result);
+    final item = LocationStackItem.locationCache[location];
+    assert(item != null, 'Unmounted location.');
+    return item?.remove(result) ?? false;
+  }
+
+  static void _checkPopType(Location<Object?>? location, Object? result) {
+    if (location == null) {
+      return;
+    }
+    // check location that will actually receive result
+    final targetLocation = LocationStackItem.locationCache[location]
+      ?.removeTarget?.location;
     // this check is only valid for locations extended from base location
-    if (_stack.activeItem?.location case
-      final LocationPopType<Object?> activeLocation
+    if (
+      targetLocation case final LocationPopType<Object?> activeLocation
       when !activeLocation.canPopWith(result)
     ) {
       throw ArgumentError.value(
@@ -428,7 +446,6 @@ class KNavigator extends InheritedWidget {
     assert(result != null, 'No KNavigator found in active shell context');
     return result!;
   }
-
 
   @override
   bool updateShouldNotify(covariant KNavigator oldWidget) =>
