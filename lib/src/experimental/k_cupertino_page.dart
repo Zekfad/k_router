@@ -10,7 +10,7 @@ import 'package:meta/meta.dart';
 
 const double _kMinFlingVelocity = 1.0; // Screen widths per second.
 // The duration for a page to animate when the user releases it mid-swipe.
-const Duration _kDroppedSwipePageAnimationDuration = .new(milliseconds: 350);
+const Duration _kDroppedSwipePageAnimationDuration = Duration(milliseconds: 350);
 
 /// A [CupertinoPage] that uses sophisticated hit testing modification in its
 /// back gesture recognizer, allowing it to be used from any part of the screen,
@@ -96,7 +96,7 @@ class _PageBasedKCupertinoPageRoute<T> extends PageRoute<T>
         linearTransition: linearTransition,
         child: _CupertinoBackGestureDetector<T>(
           getPopGestureEnabled: () => popGestureEnabled,
-          onStartPopGesture: () => .new(
+          onStartPopGesture: () => _CupertinoBackGestureController(
             navigator: navigator!,
             getIsCurrent: () => isCurrent,
             getIsActive: () => isActive,
@@ -123,7 +123,7 @@ class _BackDragGestureRecognizer extends HorizontalDragGestureRecognizer {
   @override
   void addPointer(PointerDownEvent event) {
     super.addPointer(event);
-    _initialPosition = lastPosition;
+    _initialPosition = OffsetPair(global: event.position, local: event.localPosition);
   }
 
   @override
@@ -290,7 +290,7 @@ class _ListenerWithHitTestUnderScrollView extends Listener {
   });
 
   @override
-  _RenderListenerWithHitTestUnderScrollView createRenderObject(BuildContext context) => .new(
+  _RenderListenerWithHitTestUnderScrollView createRenderObject(BuildContext context) => _RenderListenerWithHitTestUnderScrollView(
     textDirection: Directionality.of(context),
     onPointerDown: onPointerDown,
     onPointerMove: onPointerMove,

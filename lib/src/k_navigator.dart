@@ -137,7 +137,7 @@ class KNavigator extends InheritedWidget {
 
   /// Tries to remove [location] from it's navigator.
   ///
-  /// It's considered an error to attempt popping unmounted location.
+  /// It's considered an error to attempt removing unmounted location.
   ///
   /// Returns whether location was removed or not.
   static bool maybeRemoveLocation<T>(Location<T> location, [ T? result ]) {
